@@ -12,7 +12,7 @@ import tiktoken as tiktoken
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
 
 # init global logger to save logs in file
-logger = logging.getLogger('Assistent')
+logger = logging.getLogger('Assistant')
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 console_handler = logging.StreamHandler()
