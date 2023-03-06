@@ -53,6 +53,8 @@ class AssistantApp:
 
             scrollbar = tk.Scrollbar(self.master, bg=self.background_color)
             scrollbar.grid(row=0, column=1, sticky='ns')
+            # make the scrollbar be unvisible
+            scrollbar.grid_remove()
 
             self.input_text = tk.Text(self.master,
                                       yscrollcommand=scrollbar.set,
