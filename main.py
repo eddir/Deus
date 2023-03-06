@@ -109,7 +109,7 @@ class AssistantApp:
             self.switch()
 
             self.YC_KEY_SECRET = str("")
-            self.language = "ru-RU"
+            self.language = "en-US"
             self.language_entry_value = tk.StringVar(master=self.master, value=self.language)
             self.threshold = 500
             self.load_config()
