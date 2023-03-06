@@ -45,6 +45,7 @@ class AssistantApp:
         try:
             self.openai_entry = None
             self.yc_entry = None
+            self.threshold_entry = None
             self.recognizeShortAudio = None
             self.synthesizeAudio = None
             self.config_window = None
@@ -108,8 +109,9 @@ class AssistantApp:
             self.switch()
 
             self.YC_KEY_SECRET = str("")
-            self.language_entry_value = tk.StringVar(master=self.master, value="ru-RU")
             self.language = "ru-RU"
+            self.language_entry_value = tk.StringVar(master=self.master, value=self.language)
+            self.threshold = 500
             self.load_config()
 
         except Exception as e:
@@ -150,6 +152,7 @@ class AssistantApp:
                 openai_key = config['openai_key']
                 self.language = config['language']
                 self.language_entry_value.set(self.language)
+                self.threshold = config['threshold']
                 self.auth(self.YC_KEY_SECRET, openai_key)
         except FileNotFoundError:
             # show prompt to enter api keys
@@ -183,29 +186,34 @@ class AssistantApp:
                                      textvariable=tk.StringVar(self.config_window, value=openai.api_key))
         self.openai_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
 
+        self.threshold_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
+                                        textvariable=tk.IntVar(self.config_window, value=self.threshold))
+        self.threshold_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+
         # select language from dropdown
         language_label = tk.Label(self.config_window, text="Language",
                                   bg=self.background_color, fg=self.input_text_color)
-        language_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        language_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
         language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value, "ru-RU", "en-US")
         # change color
         language_dropdown.config(bg=self.background_color, fg=self.input_text_color,
                                  activebackground=self.background_color)
-        language_dropdown.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+        language_dropdown.grid(row=3, column=1, sticky='w', padx=5, pady=5)
 
         # create button to save config
         save_button = tk.Button(self.config_window, text="Save", command=self.save_config, bg='#b0bec5')
-        save_button.grid(row=3, column=0, sticky='w', padx=5, pady=5)
+        save_button.grid(row=4, column=0, sticky='w', padx=5, pady=5)
 
         # create button to cancel config
         cancel_button = tk.Button(self.config_window, text="Cancel", command=self.cancel_config, bg='#b0bec5')
-        cancel_button.grid(row=3, column=1, sticky='w', padx=5, pady=5)
+        cancel_button.grid(row=4, column=1, sticky='w', padx=5, pady=5)
 
     def save_config(self):
         try:
             self.YC_KEY_SECRET = self.yc_entry.get()
             openai.api_key = self.openai_entry.get()
             self.language = str(self.language_entry_value.get())
+            self.threshold = int(self.threshold_entry.get())
             self.config_window.destroy()
 
             if not os.path.exists(os.getenv('APPDATA') + '\\deus'):
@@ -215,7 +223,8 @@ class AssistantApp:
                 json.dump({
                     'yc_key': self.YC_KEY_SECRET,
                     'openai_key': openai.api_key,
-                    'language': self.language
+                    'language': self.language,
+                    'threshold': self.threshold
                 }, f)
 
             self.auth(self.YC_KEY_SECRET, openai.api_key)
@@ -237,7 +246,7 @@ class AssistantApp:
 
                 sample_rate = 16000
                 # Записываем аудио продолжительностью 3 секунды
-                audio_data = self.record_audio(seconds=30, sample_rate=sample_rate)
+                audio_data = self.record_audio(seconds=30, sample_rate=sample_rate, threshold=self.threshold)
                 self.input_text.config(bg=self.background_color)
                 self.master.update()
 
@@ -367,10 +376,11 @@ class AssistantApp:
         p.terminate()
 
     @staticmethod
-    def record_audio(seconds, sample_rate, chunk_size=4000, num_channels=1, wait=10) -> bytes:
+    def record_audio(seconds, sample_rate, chunk_size=4000, num_channels=1, wait=10, threshold=500) -> bytes:
         """
         Записывает аудио данной продолжительности и возвращает бинарный объект с данными
 
+        :param threshold: пороговое значение для начала записи
         :param wait: время ожидания перед началом записи
         :param integer seconds: Время записи в секундах
         :param integer sample_rate: частота дискретизации, такая же
@@ -399,7 +409,6 @@ class AssistantApp:
                 data = stream.read(chunk_size)
                 # Start recording when the audio input exceeds a threshold
                 # and stop recording when it drops below a threshold
-                threshold = 500
                 rms = audioop.rms(data, 2)
                 if recording_state == 0:
                     if rms > threshold:
