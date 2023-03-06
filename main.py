@@ -3,6 +3,11 @@ import logging
 import os
 import sys
 import threading
+
+for _name in ('stdin', 'stdout', 'stderr'):
+    if getattr(sys, _name) is None:
+        setattr(sys, _name, open(os.devnull, 'r' if _name == 'stdin' else 'w'))
+
 import tkinter as tk
 import io
 import wave
