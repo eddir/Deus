@@ -99,6 +99,7 @@ class AssistantApp:
             self.master.bind('<space>', self.start_recording)
             self.master.bind('<r>', self.reset)
             self.master.bind('<s>', self.switch)
+            self.master.bind('<c>', self.show_config_prompt)
             # right mouse click on any place of the window
             self.master.bind('<Button-3>', self.help)
 
@@ -147,7 +148,7 @@ class AssistantApp:
             # show prompt to enter api keys
             self.show_config_prompt()
 
-    def show_config_prompt(self):
+    def show_config_prompt(self, event=None):
         # create new window
         self.config_window = tk.Toplevel(self.master)
         self.config_window.title("Config")
@@ -263,6 +264,7 @@ class AssistantApp:
         messagebox.showinfo("Help",
                             "Press 'r' to reset conversation\n"
                             "Press 's' to switch between chat and eye mode\n"
+                            "Press 'c' to open config\n"
                             "Press 'space' to start recording")
 
     def update_gif(self, ind):
