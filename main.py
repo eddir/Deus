@@ -16,6 +16,9 @@ from tkinter import messagebox
 import openai as openai
 import pyaudio
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
+# todo: change back to tiktoken when fix openai/tiktoken/issues/43
+# tiktoken shows better performance and needs much less dependencies
+# from tiktoken import Tokenizer
 from transformers import GPT2Tokenizer
 
 # init global logger to save logs in file
@@ -26,7 +29,10 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-os.chdir(sys._MEIPASS)
+try:
+    os.chdir(sys._MEIPASS)
+except AttributeError:
+    pass
 
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
