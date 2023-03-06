@@ -198,14 +198,15 @@ class AssistantApp:
                 if len(audio_data) > 0:
                     text = self.recognize(audio_data, sample_rate)
 
-                    self.input_text.config(bg=self.background_color)
-            self.master.update()
+                    if len(text) > 0:
+                        self.input_text.config(bg=self.background_color)
+                        self.master.update()
 
-            self.conversation.append({"role": "user", "content": text})
-            self.cut_conversation()
+                    self.conversation.append({"role": "user", "content": text})
+                    self.cut_conversation()
 
-            response = self.chat_gpt()
-            self.conversation.append({"role": "assistant", "content": response})
+                    response = self.chat_gpt()
+                    self.conversation.append({"role": "assistant", "content": response})
 
                     self.update_text()
                     self.speech(response)
@@ -341,6 +342,7 @@ class AssistantApp:
         try:
             recording_state = 0
             for _ in range(1, int(sample_rate / chunk_size * seconds)):
+                # todo: change to while True to not limit recording time because of silence
                 data = stream.read(chunk_size)
                 # Start recording when the audio input exceeds a threshold
                 # and stop recording when it drops below a threshold
