@@ -140,7 +140,7 @@ class AssistantApp:
 
     def load_config(self):
         try:
-            with open('credentials.txt', 'r') as f:
+            with open(os.getenv('APPDATA') + '\\deus\\config.txt', 'r') as f:
                 yc_key = f.readline().strip()
                 openai_key = f.readline().strip()
                 self.auth(yc_key, openai_key)
@@ -188,7 +188,10 @@ class AssistantApp:
             openai.api_key = self.openai_entry.get()
             self.config_window.destroy()
 
-            with open('credentials.txt', 'w') as f:
+            if not os.path.exists(os.getenv('APPDATA') + '\\deus'):
+                os.makedirs(os.getenv('APPDATA') + '\\deus')
+
+            with open(os.getenv('APPDATA') + '\\deus\\config.txt', 'w') as f:
                 f.write(self.YC_KEY_SECRET + ' \n' + openai.api_key)
 
             self.auth(self.YC_KEY_SECRET, openai.api_key)
