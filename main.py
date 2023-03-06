@@ -1,4 +1,5 @@
 import audioop
+import json
 import logging
 import os
 import sys
@@ -143,10 +144,11 @@ class AssistantApp:
 
     def load_config(self):
         try:
-            with open(os.getenv('APPDATA') + '\\deus\\config.txt', 'r') as f:
-                self.YC_KEY_SECRET = f.readline().strip()
-                openai_key = f.readline().strip()
-                self.language = f.readline().strip()
+            with open(os.getenv('APPDATA') + '\\deus\\config.json', 'r') as f:
+                config = json.load(f)
+                self.YC_KEY_SECRET = config['yc_key']
+                openai_key = config['openai_key']
+                self.language = config['language']
                 self.language_entry_value.set(self.language)
                 self.auth(self.YC_KEY_SECRET, openai_key)
         except FileNotFoundError:
@@ -209,8 +211,12 @@ class AssistantApp:
             if not os.path.exists(os.getenv('APPDATA') + '\\deus'):
                 os.makedirs(os.getenv('APPDATA') + '\\deus')
 
-            with open(os.getenv('APPDATA') + '\\deus\\config.txt', 'w') as f:
-                f.write(self.YC_KEY_SECRET + '\n' + openai.api_key + '\n' + self.language)
+            with open(os.getenv('APPDATA') + '\\deus\\config.json', 'w') as f:
+                json.dump({
+                    'yc_key': self.YC_KEY_SECRET,
+                    'openai_key': openai.api_key,
+                    'language': self.language
+                }, f)
 
             self.auth(self.YC_KEY_SECRET, openai.api_key)
         except Exception as e:
