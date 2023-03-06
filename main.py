@@ -1,5 +1,7 @@
 import audioop
 import logging
+import os
+import sys
 import threading
 import tkinter as tk
 import io
@@ -8,8 +10,8 @@ from tkinter import messagebox
 
 import openai as openai
 import pyaudio
-import tiktoken as tiktoken
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
+from transformers import GPT2Tokenizer
 
 # init global logger to save logs in file
 logger = logging.getLogger('Assistant')
@@ -19,7 +21,9 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-enc = tiktoken.encoding_for_model("text-davinci-003")
+os.chdir(sys._MEIPASS)
+
+tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
 
 class AssistantApp:
@@ -202,14 +206,14 @@ class AssistantApp:
                         self.input_text.config(bg=self.background_color)
                         self.master.update()
 
-                    self.conversation.append({"role": "user", "content": text})
-                    self.cut_conversation()
+                        self.conversation.append({"role": "user", "content": text})
+                        self.cut_conversation()
 
-                    response = self.chat_gpt()
-                    self.conversation.append({"role": "assistant", "content": response})
+                        response = self.chat_gpt()
+                        self.conversation.append({"role": "assistant", "content": response})
 
-                    self.update_text()
-                    self.speech(response)
+                        self.update_text()
+                        self.speech(response)
                 else:
                     return
             except Exception as e:
@@ -276,7 +280,7 @@ class AssistantApp:
         """
         Распознает речь. Возвращает текст
         """
-        return self.recognizeShortAudio.recognize(audio_data, format='lpcm', sampleRateHertz=sample_rate)
+        return self.recognizeShortAudio.recognize(audio_data, format='lpcm', sampleRateHertz=sample_rate).strip()
 
     def speech(self, text):
         """
@@ -412,7 +416,7 @@ class AssistantApp:
             raise Exception("Unknown conversation type")
 
         # if tokens length is more than 1024 - cut it
-        while len(enc.encode(string)) > 3000:
+        while len(tokenizer.encode(string)) > 3000:
             if type(conversation) == list:
                 # cut from the beginning
                 conversation.pop(0)
