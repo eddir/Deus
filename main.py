@@ -30,6 +30,7 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 try:
+    # noinspection PyUnresolvedReferences
     os.chdir(sys._MEIPASS)
 except AttributeError:
     pass
@@ -106,6 +107,8 @@ class AssistantApp:
             self.switch()
 
             self.YC_KEY_SECRET = str("")
+            self.language_entry_value = tk.StringVar(master=self.master, value="ru-RU")
+            self.language = "ru-RU"
             self.load_config()
 
         except Exception as e:
@@ -141,9 +144,11 @@ class AssistantApp:
     def load_config(self):
         try:
             with open(os.getenv('APPDATA') + '\\deus\\config.txt', 'r') as f:
-                yc_key = f.readline().strip()
+                self.YC_KEY_SECRET = f.readline().strip()
                 openai_key = f.readline().strip()
-                self.auth(yc_key, openai_key)
+                self.language = f.readline().strip()
+                self.language_entry_value.set(self.language)
+                self.auth(self.YC_KEY_SECRET, openai_key)
         except FileNotFoundError:
             # show prompt to enter api keys
             self.show_config_prompt()
@@ -162,7 +167,8 @@ class AssistantApp:
         yc_label.grid(row=0, column=0, sticky='w', padx=5, pady=5)
 
         # create entry for Yandex Cloud API key
-        self.yc_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color)
+        self.yc_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
+                                 textvariable=tk.StringVar(self.config_window, value=self.YC_KEY_SECRET))
         self.yc_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
 
         # create label for OpenAI API key
@@ -171,28 +177,40 @@ class AssistantApp:
         openai_label.grid(row=1, column=0, sticky='w', padx=5, pady=5)
 
         # create entry for OpenAI API key
-        self.openai_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color)
+        self.openai_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
+                                     textvariable=tk.StringVar(self.config_window, value=openai.api_key))
         self.openai_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
+
+        # select language from dropdown
+        language_label = tk.Label(self.config_window, text="Language",
+                                  bg=self.background_color, fg=self.input_text_color)
+        language_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value, "ru-RU", "en-US")
+        # change color
+        language_dropdown.config(bg=self.background_color, fg=self.input_text_color,
+                                 activebackground=self.background_color)
+        language_dropdown.grid(row=2, column=1, sticky='w', padx=5, pady=5)
 
         # create button to save config
         save_button = tk.Button(self.config_window, text="Save", command=self.save_config, bg='#b0bec5')
-        save_button.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        save_button.grid(row=3, column=0, sticky='w', padx=5, pady=5)
 
         # create button to cancel config
         cancel_button = tk.Button(self.config_window, text="Cancel", command=self.cancel_config, bg='#b0bec5')
-        cancel_button.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+        cancel_button.grid(row=3, column=1, sticky='w', padx=5, pady=5)
 
     def save_config(self):
         try:
             self.YC_KEY_SECRET = self.yc_entry.get()
             openai.api_key = self.openai_entry.get()
+            self.language = str(self.language_entry_value.get())
             self.config_window.destroy()
 
             if not os.path.exists(os.getenv('APPDATA') + '\\deus'):
                 os.makedirs(os.getenv('APPDATA') + '\\deus')
 
             with open(os.getenv('APPDATA') + '\\deus\\config.txt', 'w') as f:
-                f.write(self.YC_KEY_SECRET + ' \n' + openai.api_key)
+                f.write(self.YC_KEY_SECRET + '\n' + openai.api_key + '\n' + self.language)
 
             self.auth(self.YC_KEY_SECRET, openai.api_key)
         except Exception as e:
@@ -214,12 +232,13 @@ class AssistantApp:
                 sample_rate = 16000
                 # Записываем аудио продолжительностью 3 секунды
                 audio_data = self.record_audio(seconds=30, sample_rate=sample_rate)
+                self.input_text.config(bg=self.background_color)
+                self.master.update()
 
                 if len(audio_data) > 0:
                     text = self.recognize(audio_data, sample_rate)
 
                     if len(text) > 0:
-                        self.input_text.config(bg=self.background_color)
                         self.master.update()
 
                         self.conversation.append({"role": "user", "content": text})
@@ -230,8 +249,8 @@ class AssistantApp:
 
                         self.update_text()
                         self.speech(response)
-                else:
-                    return
+                        continue
+                return
             except Exception as e:
                 self.fatal("Error", str(e))
                 return
@@ -297,7 +316,9 @@ class AssistantApp:
         """
         Распознает речь. Возвращает текст
         """
-        return self.recognizeShortAudio.recognize(audio_data, format='lpcm', sampleRateHertz=sample_rate).strip()
+        return self.recognizeShortAudio.recognize(
+            audio_data, format='lpcm', sampleRateHertz=sample_rate, lang=self.language
+        ).strip()
 
     def speech(self, text):
         """
@@ -305,9 +326,14 @@ class AssistantApp:
         :param text:
         :return:
         """
+        voice = {
+            'ru-RU': 'zahar',
+            'en-US': 'john',
+        }[self.language]
         audio_data = self.synthesizeAudio.synthesize_stream(
             text=text,
-            voice='zahar', format='lpcm', sampleRateHertz='16000'
+            voice=voice, lang=self.language,
+            format='lpcm', sampleRateHertz='16000'
         )
         # воспроизводим аудиофайл
         self.play_audio(audio_data)
