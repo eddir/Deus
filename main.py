@@ -48,6 +48,7 @@ class AssistantApp:
             # master.minsize(400, 200)
             master.title("Deus")
             master.maxsize(width=master.winfo_screenwidth(), height=master.winfo_screenheight())
+            master.iconbitmap("logo.ico")
 
             # Setting black background and white text
             self.background_color = '#37474f'
