@@ -186,16 +186,19 @@ class AssistantApp:
         t.start()
 
     def record(self):
-        try:
-            self.input_text.config(bg=self.background_second_color)
-            self.master.update()
+        while True:
+            try:
+                self.input_text.config(bg=self.background_second_color)
+                self.master.update()
 
-            sample_rate = 16000
-            # Записываем аудио продолжительностью 3 секунды
-            audio_data = self.record_audio(seconds=30, sample_rate=sample_rate)
-            text = self.recognize(audio_data, sample_rate)
+                sample_rate = 16000
+                # Записываем аудио продолжительностью 3 секунды
+                audio_data = self.record_audio(seconds=30, sample_rate=sample_rate)
 
-            self.input_text.config(bg=self.background_color)
+                if len(audio_data) > 0:
+                    text = self.recognize(audio_data, sample_rate)
+
+                    self.input_text.config(bg=self.background_color)
             self.master.update()
 
             self.conversation.append({"role": "user", "content": text})
@@ -204,10 +207,13 @@ class AssistantApp:
             response = self.chat_gpt()
             self.conversation.append({"role": "assistant", "content": response})
 
-            self.update_text()
-            self.speech(response)
-        except Exception as e:
-            self.fatal("Error", str(e))
+                    self.update_text()
+                    self.speech(response)
+                else:
+                    return
+            except Exception as e:
+                self.fatal("Error", str(e))
+                return
 
     def switch(self, event=None):
         if self.mode == "chat":
@@ -307,10 +313,11 @@ class AssistantApp:
         p.terminate()
 
     @staticmethod
-    def record_audio(seconds, sample_rate, chunk_size=4000, num_channels=1) -> bytes:
+    def record_audio(seconds, sample_rate, chunk_size=4000, num_channels=1, wait=10) -> bytes:
         """
         Записывает аудио данной продолжительности и возвращает бинарный объект с данными
 
+        :param wait: время ожидания перед началом записи
         :param integer seconds: Время записи в секундах
         :param integer sample_rate: частота дискретизации, такая же
             какую вы указали в параметре sampleRateHertz
@@ -343,6 +350,9 @@ class AssistantApp:
                     if rms > threshold:
                         recording_state = 1
                     else:
+                        wait -= 1
+                        if wait <= 0:
+                            return bytes()
                         continue
                 if recording_state > 0:
                     if rms <= threshold:
