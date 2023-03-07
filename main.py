@@ -50,6 +50,7 @@ I18N = {
         "yandex_speech_api_key": "Yandex Speech API Key",
         "threshold": "Microphone threshold",
         "language": "Language",
+        "hide_buttons": "Hide buttons",
         "save": "Save",
         "cancel": "Cancel",
         "error": "Error",
@@ -67,6 +68,7 @@ I18N = {
         "yandex_speech_api_key": "Yandex Speech API ключ",
         "threshold": "Чувствительность микрофона",
         "language": "Язык",
+        "hide_buttons": "Скрыть кнопки",
         "save": "Сохранить",
         "cancel": "Отмена",
         "error": "Ошибка",
@@ -87,7 +89,9 @@ class AssistantApp:
             self.YC_KEY_SECRET = str("")
             self.openai_entry = None
             self.yc_entry = None
+            self.hide_buttons_var = None
             self.language = "en-US"
+            self.hide_buttons = True
             self.threshold_entry = None
             self.speech = None
             self.config_window = None
@@ -132,14 +136,10 @@ class AssistantApp:
             self.master.rowconfigure(0, weight=1)  # set row 0 to fill remaining space
 
             # beautiful button for recording in the bottom right corner
-            # self.reset_button = tk.Button(self.master, text="Reset", command=self.reset, bg='#b0bec5')
-            # self.reset_button.grid(row=1, column=0, sticky='w', padx=5, pady=5)
-            # self.master.columnconfigure(0, weight=1)  # set column 1 to fill remaining space
-            # self.record_button = tk.Button(self.master, text="Record", command=self.record, bg='#b0bec5')
-            # self.record_button.grid(row=1, column=0, sticky='e', padx=5, pady=5)
-            # self.switcher = tk.Button(self.master, text="Switch", command=self.switch, bg='#b0bec5')
-            # self.switcher.grid(row=1, column=0, sticky='s', padx=15, pady=5)
-            # self.master.columnconfigure(0, weight=1)  # set column 0 to fill remaining space
+            self.reset_button = tk.Button(self.master, text="Reset", command=self.reset, bg='#b0bec5')
+            self.master.columnconfigure(0, weight=1)  # set column 1 to fill remaining space
+            self.record_button = tk.Button(self.master, text="Record", command=self.record, bg='#b0bec5')
+            self.switcher = tk.Button(self.master, text="Switch", command=self.switch, bg='#b0bec5')
 
             scrollbar.config(command=self.input_text.yview)
             self.input_text.bind('<Control-MouseWheel>', self.on_mousewheel)
@@ -155,6 +155,12 @@ class AssistantApp:
 
             self.language_entry_value = tk.StringVar(master=self.master, value=self.language)
             self.load_config()
+
+            if not self.hide_buttons:
+                self.reset_button.grid(row=1, column=0, sticky='w', padx=5, pady=5)
+                self.record_button.grid(row=1, column=0, sticky='e', padx=5, pady=5)
+                self.switcher.grid(row=1, column=0, sticky='s', padx=15, pady=5)
+                self.master.columnconfigure(0, weight=1)  # set column 0 to fill remaining space
 
         except Exception as e:
             self.fatal("Couldn't initialize the application", str(e))
@@ -189,11 +195,12 @@ class AssistantApp:
         try:
             with open(os.getenv('APPDATA') + '\\deus\\config.json', 'r') as f:
                 config = json.load(f)
-                self.YC_KEY_SECRET = config['yc_key']
-                openai_key = config['openai_key']
-                self.language = config['language']
+                self.YC_KEY_SECRET = config.get('yc_key')
+                openai_key = config.get('openai_key', None)
+                self.language = config.get('language', 'en-US')
                 self.language_entry_value.set(self.language)
-                self.threshold = config['threshold']
+                self.threshold = config.get('threshold', 500)
+                self.hide_buttons = config.get('hide_buttons', True)
                 self.auth(self.YC_KEY_SECRET, openai_key)
         except FileNotFoundError:
             # show prompt to enter api keys
@@ -228,7 +235,7 @@ class AssistantApp:
         self.openai_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
 
         threshold_label = tk.Label(self.config_window, text=I18N[self.language]['threshold'],
-                                      bg=self.background_color, fg=self.input_text_color)
+                                   bg=self.background_color, fg=self.input_text_color)
         threshold_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
 
         self.threshold_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
@@ -240,19 +247,29 @@ class AssistantApp:
                                   bg=self.background_color, fg=self.input_text_color)
         language_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
         language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value, "ru-RU", "en-US")
-        # change color
         language_dropdown.config(bg=self.background_color, fg=self.input_text_color,
                                  activebackground=self.background_color)
         language_dropdown.grid(row=3, column=1, sticky='w', padx=5, pady=5)
 
+        # checkbox to hide buttons
+        self.hide_buttons_var = tk.IntVar(self.config_window, value=self.hide_buttons)
+        hide_buttons_checkbox = tk.Checkbutton(self.config_window, text=I18N[self.language]['hide_buttons'],
+                                               variable=self.hide_buttons_var,
+                                               # поменять цвет галочки
+                                               fg='white', bg=self.background_color,
+                                               activebackground=self.background_color, selectcolor=self.background_color,
+                                               activeforeground='white', highlightcolor='white', bd=0)
+        hide_buttons_checkbox.grid(row=5, column=0, sticky='w', padx=5, pady=5)
+
         # create button to save config
-        save_button = tk.Button(self.config_window, text=I18N[self.language]['save'], command=self.save_config, bg='#b0bec5')
-        save_button.grid(row=4, column=0, sticky='w', padx=5, pady=5)
+        save_button = tk.Button(self.config_window, text=I18N[self.language]['save'], command=self.save_config,
+                                bg='#b0bec5')
+        save_button.grid(row=6, column=0, sticky='w', padx=5, pady=5)
 
         # create button to cancel config
         cancel_button = tk.Button(self.config_window, text=I18N[self.language]['cancel'], command=self.cancel_config,
                                   bg='#b0bec5')
-        cancel_button.grid(row=4, column=1, sticky='w', padx=5, pady=5)
+        cancel_button.grid(row=6, column=1, sticky='w', padx=5, pady=5)
 
     def save_config(self):
         try:
@@ -260,6 +277,7 @@ class AssistantApp:
             openai.api_key = self.openai_entry.get()
             self.language = str(self.language_entry_value.get())
             self.threshold = int(self.threshold_entry.get())
+            self.hide_buttons = bool(self.hide_buttons_var.get())
             self.config_window.destroy()
 
             if not os.path.exists(os.getenv('APPDATA') + '\\deus'):
@@ -270,7 +288,8 @@ class AssistantApp:
                     'yc_key': self.YC_KEY_SECRET,
                     'openai_key': openai.api_key,
                     'language': self.language,
-                    'threshold': self.threshold
+                    'threshold': self.threshold,
+                    'hide_buttons': self.hide_buttons
                 }, f)
 
             self.auth(self.YC_KEY_SECRET, openai.api_key)
@@ -319,7 +338,6 @@ class AssistantApp:
             except Exception as e:
                 self.fatal("Error", "%s - %s" % (type(e).__name__, e))
                 return
-
 
     def switch(self, event=None):
         if self.mode == "chat":
