@@ -4,6 +4,11 @@ import logging
 import os
 import sys
 import threading
+import traceback
+
+from openai.error import RateLimitError
+
+from speech import YandexSpeechKit
 
 for _name in ('stdin', 'stdout', 'stderr'):
     if getattr(sys, _name) is None:
@@ -16,7 +21,6 @@ from tkinter import messagebox
 
 import openai as openai
 import pyaudio
-from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
 # todo: change back to tiktoken when fix openai/tiktoken/issues/43
 # tiktoken shows better performance and needs much less dependencies
 # from tiktoken import Tokenizer
@@ -38,17 +42,57 @@ except AttributeError:
 
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
+I18N = {
+    "en-US": {
+        "title": "Deus",
+        "config": "Config",
+        "openai_api_key": "OpenAI API Key",
+        "yandex_speech_api_key": "Yandex Speech API Key",
+        "threshold": "Microphone threshold",
+        "language": "Language",
+        "save": "Save",
+        "cancel": "Cancel",
+        "error": "Error",
+        "openai_overload": "Currently OpenAI API is overloaded. Please try again later.",
+        "openai_api_key_invalid": "OpenAI API Key is invalid. Please check it and try again.",
+        "yandex_speech_api_key_invalid": "Yandex Speech API Key is invalid. Please check it and try again.",
+        "threshold_invalid": "Threshold is invalid. Please check it and try again.",
+        "you": "You",
+        "deus": "Deus",
+    },
+    "ru-RU": {
+        "title": "Деус",
+        "config": "Настройки",
+        "openai_api_key": "OpenAI API ключ",
+        "yandex_speech_api_key": "Yandex Speech API ключ",
+        "threshold": "Чувствительность микрофона",
+        "language": "Язык",
+        "save": "Сохранить",
+        "cancel": "Отмена",
+        "error": "Ошибка",
+        "openai_overload": "Сейчас OpenAI API перегружен. Пожалуйста, попробуйте позже.",
+        "openai_api_key_invalid": "OpenAI API Key неверный. Пожалуйста, проверьте его и попробуйте снова.",
+        "yandex_speech_api_key_invalid": "Yandex Speech API Key неверный. Пожалуйста, проверьте его и попробуйте снова.",
+        "threshold_invalid": "Порог неверный. Пожалуйста, проверьте его и попробуйте снова.",
+        "you": "Вы",
+        "deus": "Деус",
+    }
+}
+
 
 class AssistantApp:
 
     def __init__(self, master):
         try:
+            self.YC_KEY_SECRET = str("")
             self.openai_entry = None
             self.yc_entry = None
+            self.language = "en-US"
             self.threshold_entry = None
-            self.recognizeShortAudio = None
-            self.synthesizeAudio = None
+            self.speech = None
             self.config_window = None
+            self.threshold = 500
+
             self.label = None
             self.frames = [tk.PhotoImage(file='./deus.gif', format='gif -index %i' % i) for i in range(102)]
             self.conversation = []
@@ -60,7 +104,7 @@ class AssistantApp:
             self.max_width = self.master.winfo_screenwidth()
 
             # master.minsize(400, 200)
-            master.title("Deus")
+            master.title(I18N[self.language]["title"])
             master.maxsize(width=master.winfo_screenwidth(), height=master.winfo_screenheight())
             master.iconbitmap("logo.ico")
 
@@ -103,15 +147,13 @@ class AssistantApp:
             self.master.bind('<r>', self.reset)
             self.master.bind('<s>', self.switch)
             self.master.bind('<c>', self.show_config_prompt)
-            # right mouse click on any place of the window
+            self.master.bind('<h>', self.help)
+            self.master.bind('<?>', self.help)
             self.master.bind('<Button-3>', self.help)
 
             self.switch()
 
-            self.YC_KEY_SECRET = str("")
-            self.language = "en-US"
             self.language_entry_value = tk.StringVar(master=self.master, value=self.language)
-            self.threshold = 500
             self.load_config()
 
         except Exception as e:
@@ -119,22 +161,21 @@ class AssistantApp:
 
     def auth(self, yc_key=None, openai_key=None):
         try:
-            session = Session.from_api_key(yc_key, x_client_request_id_header=True, x_data_logging_enabled=True)
-            self.synthesizeAudio = SpeechSynthesis(session)
-            self.recognizeShortAudio = ShortAudioRecognition(session)
+            self.speech = YandexSpeechKit(yc_key, self.language)
         except Exception as e:
-            self.error("Couldn't authorize in Yandex Cloud", str(e))
+            self.error(I18N[self.language]['yandex_speech_api_key_invalid'], str(e))
             self.show_config_prompt()
         try:
             openai.api_key = openai_key
             # check if api key is valid
             openai.Engine.list()
         except Exception as e:
-            self.error("Couldn't authorize in OpenAI", str(e))
+            self.error(I18N[self.language]['openai_api_key_invalid'], str(e))
             self.show_config_prompt()
 
     def fatal(self, title, message):
         logger.error(message)
+        logger.error(traceback.format_exc())
         messagebox.showerror(title, message)
         self.master.destroy()
         self.master.quit()
@@ -161,13 +202,13 @@ class AssistantApp:
     def show_config_prompt(self, event=None):
         # create new window
         self.config_window = tk.Toplevel(self.master)
-        self.config_window.title("Config")
+        self.config_window.title(I18N[self.language]['config'])
         self.config_window.maxsize(width=self.config_window.winfo_screenwidth(),
                                    height=self.config_window.winfo_screenheight())
         self.config_window.configure(bg=self.background_color)
 
         # create label for Yandex Cloud API key
-        yc_label = tk.Label(self.config_window, text="Yandex Cloud API key",
+        yc_label = tk.Label(self.config_window, text=I18N[self.language]['yandex_speech_api_key'],
                             bg=self.background_color, fg=self.input_text_color)
         yc_label.grid(row=0, column=0, sticky='w', padx=5, pady=5)
 
@@ -177,7 +218,7 @@ class AssistantApp:
         self.yc_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
 
         # create label for OpenAI API key
-        openai_label = tk.Label(self.config_window, text="OpenAI API key",
+        openai_label = tk.Label(self.config_window, text=I18N[self.language]['openai_api_key'],
                                 bg=self.background_color, fg=self.input_text_color)
         openai_label.grid(row=1, column=0, sticky='w', padx=5, pady=5)
 
@@ -186,12 +227,16 @@ class AssistantApp:
                                      textvariable=tk.StringVar(self.config_window, value=openai.api_key))
         self.openai_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
 
+        threshold_label = tk.Label(self.config_window, text=I18N[self.language]['threshold'],
+                                      bg=self.background_color, fg=self.input_text_color)
+        threshold_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+
         self.threshold_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
                                         textvariable=tk.IntVar(self.config_window, value=self.threshold))
         self.threshold_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
 
         # select language from dropdown
-        language_label = tk.Label(self.config_window, text="Language",
+        language_label = tk.Label(self.config_window, text=I18N[self.language]['language'],
                                   bg=self.background_color, fg=self.input_text_color)
         language_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
         language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value, "ru-RU", "en-US")
@@ -201,11 +246,12 @@ class AssistantApp:
         language_dropdown.grid(row=3, column=1, sticky='w', padx=5, pady=5)
 
         # create button to save config
-        save_button = tk.Button(self.config_window, text="Save", command=self.save_config, bg='#b0bec5')
+        save_button = tk.Button(self.config_window, text=I18N[self.language]['save'], command=self.save_config, bg='#b0bec5')
         save_button.grid(row=4, column=0, sticky='w', padx=5, pady=5)
 
         # create button to cancel config
-        cancel_button = tk.Button(self.config_window, text="Cancel", command=self.cancel_config, bg='#b0bec5')
+        cancel_button = tk.Button(self.config_window, text=I18N[self.language]['cancel'], command=self.cancel_config,
+                                  bg='#b0bec5')
         cancel_button.grid(row=4, column=1, sticky='w', padx=5, pady=5)
 
     def save_config(self):
@@ -251,24 +297,29 @@ class AssistantApp:
                 self.master.update()
 
                 if len(audio_data) > 0:
-                    text = self.recognize(audio_data, sample_rate)
+                    text = self.speech.recognize(audio_data, sample_rate)
 
                     if len(text) > 0:
                         self.master.update()
 
                         self.conversation.append({"role": "user", "content": text})
                         self.cut_conversation()
+                        self.update_text()
 
                         response = self.chat_gpt()
                         self.conversation.append({"role": "assistant", "content": response})
 
                         self.update_text()
-                        self.speech(response)
+                        self.play_audio(self.speech.synthesize(response))
                         continue
                 return
-            except Exception as e:
-                self.fatal("Error", str(e))
+            except RateLimitError:
+                messagebox.showerror("Error", I18N[self.language]['rate_limit_error'])
                 return
+            except Exception as e:
+                self.fatal("Error", "%s - %s" % (type(e).__name__, e))
+                return
+
 
     def switch(self, event=None):
         if self.mode == "chat":
@@ -317,41 +368,15 @@ class AssistantApp:
         text = ""
         for message in self.conversation:
             if message["role"] == "user":
-                text += "Вы: " + message["content"] + " \n"
+                text += "%s: %s \n" % (I18N[self.language]['you'], message["content"])
 
             if message["role"] == "assistant":
-                text += "Ассистент: " + message["content"] + " \n"
+                text += "%s: %s \n" % (I18N[self.language]['deus'], message["content"])
 
         self.input_text.delete(1.0, tk.END)
         self.input_text.insert(tk.END, text)
         self.input_text.see(tk.END)
         self.master.update()
-
-    def recognize(self, audio_data, sample_rate):
-        """
-        Распознает речь. Возвращает текст
-        """
-        return self.recognizeShortAudio.recognize(
-            audio_data, format='lpcm', sampleRateHertz=sample_rate, lang=self.language
-        ).strip()
-
-    def speech(self, text):
-        """
-        Произносит текст
-        :param text:
-        :return:
-        """
-        voice = {
-            'ru-RU': 'zahar',
-            'en-US': 'john',
-        }[self.language]
-        audio_data = self.synthesizeAudio.synthesize_stream(
-            text=text,
-            voice=voice, lang=self.language,
-            format='lpcm', sampleRateHertz='16000'
-        )
-        # воспроизводим аудиофайл
-        self.play_audio(audio_data)
 
     @staticmethod
     def play_audio(audio_data):
