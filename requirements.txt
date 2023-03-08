@@ -1,4 +1,3 @@
-future~=0.18.3
 openai~=0.27.0
 PyAudio~=0.2.13
 speechkit~=2.1.1

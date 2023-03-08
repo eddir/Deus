@@ -1,11 +1,23 @@
 from abc import ABC, abstractmethod
 
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
+from google.cloud import speech
+from google.cloud.speech import enums
+from google.cloud.speech import types
 
 
 class SpeechKit(ABC):
     def __init__(self, language):
         self.language = language
+
+    @staticmethod
+    def create(provider, api_key, language):
+        if provider == 'yandex':
+            return YandexSpeechKit(api_key, language)
+        elif provider == 'google':
+            return GoogleSpeechAPI(api_key, language)
+        else:
+            raise ValueError(f'Unknown provider: {provider}')
 
     @abstractmethod
     def recognize(self, audio_bytes):
@@ -49,8 +61,23 @@ class YandexSpeechKit(SpeechKit):
 
 
 class GoogleSpeechAPI(SpeechKit):
+    # pycharm doesn't understand protobuf enums
+    def __init__(self, api_key, language):
+        self.recognizer = speech.SpeechClient()
+        self.config = types.RecognitionConfig(
+            encoding=enums.RecognitionConfig.AudioEncoding.OGG_OPUS,
+            language_code='en-US',
+            sample_rate_hertz=16000,
+            enable_word_time_offsets=True
+        )
+        super().__init__(language)
+
     def synthesize(self, text):
         pass
 
     def recognize(self, audio_bytes):
-        pass
+        result = self.recognizer(request={
+            "config": self.config,
+            "audio": speech.RecognitionAudio(content=content)
+        })
+        print(result)

@@ -8,7 +8,7 @@ import traceback
 
 from openai.error import RateLimitError
 
-from speech import YandexSpeechKit
+from speech import YandexSpeechKit, SpeechKit
 
 for _name in ('stdin', 'stdout', 'stderr'):
     if getattr(sys, _name) is None:
@@ -47,7 +47,8 @@ I18N = {
         "title": "Deus",
         "config": "Config",
         "openai_api_key": "OpenAI API Key",
-        "yandex_speech_api_key": "Yandex Speech API Key",
+        "speech_api_key": "Speech API Key",
+        "speech_provider": "Speech provider",
         "threshold": "Microphone threshold",
         "language": "Language",
         "hide_buttons": "Hide buttons",
@@ -56,7 +57,7 @@ I18N = {
         "error": "Error",
         "openai_overload": "Currently OpenAI API is overloaded. Please try again later.",
         "openai_api_key_invalid": "OpenAI API Key is invalid. Please check it and try again.",
-        "yandex_speech_api_key_invalid": "Yandex Speech API Key is invalid. Please check it and try again.",
+        "speech_api_key_invalid": "Speech API Key is invalid. Please check it and try again.",
         "threshold_invalid": "Threshold is invalid. Please check it and try again.",
         "you": "You",
         "deus": "Deus",
@@ -65,7 +66,8 @@ I18N = {
         "title": "Деус",
         "config": "Настройки",
         "openai_api_key": "OpenAI API ключ",
-        "yandex_speech_api_key": "Yandex Speech API ключ",
+        "speech_api_key": "Speech API ключ",
+        "speech_provider": "Речевой провайдер",
         "threshold": "Чувствительность микрофона",
         "language": "Язык",
         "hide_buttons": "Скрыть кнопки",
@@ -74,7 +76,7 @@ I18N = {
         "error": "Ошибка",
         "openai_overload": "Сейчас OpenAI API перегружен. Пожалуйста, попробуйте позже.",
         "openai_api_key_invalid": "OpenAI API Key неверный. Пожалуйста, проверьте его и попробуйте снова.",
-        "yandex_speech_api_key_invalid": "Yandex Speech API Key неверный. Пожалуйста, проверьте его и попробуйте снова.",
+        "speech_api_key_invalid": "Speech API Key неверный. Пожалуйста, проверьте его и попробуйте снова.",
         "threshold_invalid": "Порог неверный. Пожалуйста, проверьте его и попробуйте снова.",
         "you": "Вы",
         "deus": "Деус",
@@ -88,10 +90,12 @@ class AssistantApp:
         try:
             self.YC_KEY_SECRET = str("")
             self.openai_entry = None
-            self.yc_entry = None
+            self.speech_key_entry = None
+            self.speech_provider_value = None
             self.hide_buttons_var = None
             self.language = "en-US"
             self.hide_buttons = True
+            self.speech_provider = "google"
             self.threshold_entry = None
             self.speech = None
             self.config_window = None
@@ -165,11 +169,11 @@ class AssistantApp:
         except Exception as e:
             self.fatal("Couldn't initialize the application", str(e))
 
-    def auth(self, yc_key=None, openai_key=None):
+    def auth(self, openai_key=None):
         try:
-            self.speech = YandexSpeechKit(yc_key, self.language)
+            self.speech = SpeechKit.create(self.speech_provider, self.YC_KEY_SECRET, self.language)
         except Exception as e:
-            self.error(I18N[self.language]['yandex_speech_api_key_invalid'], str(e))
+            self.error(I18N[self.language]['speech_api_key_invalid'], str(e))
             self.show_config_prompt()
         try:
             openai.api_key = openai_key
@@ -197,11 +201,12 @@ class AssistantApp:
                 config = json.load(f)
                 self.YC_KEY_SECRET = config.get('yc_key')
                 openai_key = config.get('openai_key', None)
+                self.speech_provider = config.get('speech_provider', 'google')
                 self.language = config.get('language', 'en-US')
                 self.language_entry_value.set(self.language)
                 self.threshold = config.get('threshold', 500)
                 self.hide_buttons = config.get('hide_buttons', True)
-                self.auth(self.YC_KEY_SECRET, openai_key)
+                self.auth(openai_key)
         except FileNotFoundError:
             # show prompt to enter api keys
             self.show_config_prompt()
@@ -214,42 +219,54 @@ class AssistantApp:
                                    height=self.config_window.winfo_screenheight())
         self.config_window.configure(bg=self.background_color)
 
-        # create label for Yandex Cloud API key
-        yc_label = tk.Label(self.config_window, text=I18N[self.language]['yandex_speech_api_key'],
-                            bg=self.background_color, fg=self.input_text_color)
-        yc_label.grid(row=0, column=0, sticky='w', padx=5, pady=5)
-
-        # create entry for Yandex Cloud API key
-        self.yc_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
-                                 textvariable=tk.StringVar(self.config_window, value=self.YC_KEY_SECRET))
-        self.yc_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
-
         # create label for OpenAI API key
         openai_label = tk.Label(self.config_window, text=I18N[self.language]['openai_api_key'],
                                 bg=self.background_color, fg=self.input_text_color)
-        openai_label.grid(row=1, column=0, sticky='w', padx=5, pady=5)
-
+        openai_label.grid(row=0, column=0, sticky='w', padx=5, pady=5)
         # create entry for OpenAI API key
         self.openai_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
                                      textvariable=tk.StringVar(self.config_window, value=openai.api_key))
-        self.openai_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
+        self.openai_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
+
+        # create label for Yandex Cloud API key
+        yc_label = tk.Label(self.config_window, text=I18N[self.language]['speech_api_key'],
+                            bg=self.background_color, fg=self.input_text_color)
+        yc_label.grid(row=1, column=0, sticky='w', padx=5, pady=5)
+        # create entry for Yandex Cloud API key
+        self.speech_key_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
+                                         textvariable=tk.StringVar(self.config_window, value=self.YC_KEY_SECRET))
+        self.speech_key_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
+
+        # select yandex or google speech provider dropdown
+        speech_provider_label = tk.Label(self.config_window, text=I18N[self.language]['speech_provider'],
+                                         bg=self.background_color, fg=self.input_text_color)
+        speech_provider_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        self.speech_provider_value = tk.StringVar(self.config_window, value=self.speech_provider)
+        speech_provider_dropdown = tk.OptionMenu(self.config_window, self.speech_provider_value, 'google', 'yandex')
+        speech_provider_dropdown.config(bg=self.background_color, fg=self.input_text_color,
+                                        activebackground=self.background_color, activeforeground=self.input_text_color,
+                                        highlightbackground=self.background_color, highlightcolor=self.background_color,
+                                        highlightthickness=0)
+        speech_provider_dropdown.grid(row=2, column=1, sticky='w', padx=5, pady=5)
 
         threshold_label = tk.Label(self.config_window, text=I18N[self.language]['threshold'],
                                    bg=self.background_color, fg=self.input_text_color)
-        threshold_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        threshold_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
 
         self.threshold_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
                                         textvariable=tk.IntVar(self.config_window, value=self.threshold))
-        self.threshold_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+        self.threshold_entry.grid(row=3, column=1, sticky='w', padx=5, pady=5)
 
         # select language from dropdown
         language_label = tk.Label(self.config_window, text=I18N[self.language]['language'],
                                   bg=self.background_color, fg=self.input_text_color)
-        language_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
+        language_label.grid(row=4, column=0, sticky='w', padx=5, pady=5)
         language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value, "ru-RU", "en-US")
         language_dropdown.config(bg=self.background_color, fg=self.input_text_color,
-                                 activebackground=self.background_color)
-        language_dropdown.grid(row=3, column=1, sticky='w', padx=5, pady=5)
+                                 activebackground=self.background_color, activeforeground=self.input_text_color,
+                                 highlightbackground=self.background_color, highlightcolor=self.background_color,
+                                 highlightthickness=0)
+        language_dropdown.grid(row=4, column=1, sticky='w', padx=5, pady=5)
 
         # checkbox to hide buttons
         self.hide_buttons_var = tk.IntVar(self.config_window, value=self.hide_buttons)
@@ -257,7 +274,8 @@ class AssistantApp:
                                                variable=self.hide_buttons_var,
                                                # поменять цвет галочки
                                                fg='white', bg=self.background_color,
-                                               activebackground=self.background_color, selectcolor=self.background_color,
+                                               activebackground=self.background_color,
+                                               selectcolor=self.background_color,
                                                activeforeground='white', highlightcolor='white', bd=0)
         hide_buttons_checkbox.grid(row=5, column=0, sticky='w', padx=5, pady=5)
 
@@ -273,8 +291,9 @@ class AssistantApp:
 
     def save_config(self):
         try:
-            self.YC_KEY_SECRET = self.yc_entry.get()
+            self.YC_KEY_SECRET = self.speech_key_entry.get()
             openai.api_key = self.openai_entry.get()
+            self.speech_provider = self.speech_provider_value.get()
             self.language = str(self.language_entry_value.get())
             self.threshold = int(self.threshold_entry.get())
             self.hide_buttons = bool(self.hide_buttons_var.get())
@@ -287,12 +306,13 @@ class AssistantApp:
                 json.dump({
                     'yc_key': self.YC_KEY_SECRET,
                     'openai_key': openai.api_key,
+                    'speech_provider': self.speech_provider,
                     'language': self.language,
                     'threshold': self.threshold,
                     'hide_buttons': self.hide_buttons
                 }, f)
 
-            self.auth(self.YC_KEY_SECRET, openai.api_key)
+            self.auth(openai.api_key)
         except Exception as e:
             self.fatal("Couldn't save config", str(e))
 
