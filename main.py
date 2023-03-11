@@ -17,7 +17,7 @@ for _name in ('stdin', 'stdout', 'stderr'):
 import tkinter as tk
 import io
 import wave
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 
 import openai as openai
 import pyaudio
@@ -48,6 +48,7 @@ I18N = {
         "config": "Config",
         "openai_api_key": "OpenAI API Key",
         "speech_api_key": "Speech API Key",
+        "speech_key_location": "Speech API Key Location (json file)",
         "speech_provider": "Speech provider",
         "threshold": "Microphone threshold",
         "language": "Language",
@@ -67,6 +68,7 @@ I18N = {
         "config": "Настройки",
         "openai_api_key": "OpenAI API ключ",
         "speech_api_key": "Speech API ключ",
+        "speech_key_location": "Speech API ключ (json файл)",
         "speech_provider": "Речевой провайдер",
         "threshold": "Чувствительность микрофона",
         "language": "Язык",
@@ -88,9 +90,11 @@ class AssistantApp:
 
     def __init__(self, master):
         try:
-            self.YC_KEY_SECRET = str("")
+            self.SPEECH_KEY = str("")
+            self.SPEECH_KEY_LOCATION = str("")
             self.openai_entry = None
             self.speech_key_entry = None
+            self.speech_key_location_entry = None
             self.speech_provider_value = None
             self.hide_buttons_var = None
             self.language = "en-US"
@@ -100,6 +104,7 @@ class AssistantApp:
             self.speech = None
             self.config_window = None
             self.threshold = 500
+            self.recordingSampleRate = 16000
 
             self.label = None
             self.frames = [tk.PhotoImage(file='./deus.gif', format='gif -index %i' % i) for i in range(102)]
@@ -171,7 +176,8 @@ class AssistantApp:
 
     def auth(self, openai_key=None):
         try:
-            self.speech = SpeechKit.create(self.speech_provider, self.YC_KEY_SECRET, self.language)
+            key = self.SPEECH_KEY if self.speech_provider == "yandex" else self.SPEECH_KEY_LOCATION
+            self.speech = SpeechKit.create(self.speech_provider, key, self.language, self.recordingSampleRate)
         except Exception as e:
             self.error(I18N[self.language]['speech_api_key_invalid'], str(e))
             self.show_config_prompt()
@@ -199,7 +205,8 @@ class AssistantApp:
         try:
             with open(os.getenv('APPDATA') + '\\deus\\config.json', 'r') as f:
                 config = json.load(f)
-                self.YC_KEY_SECRET = config.get('yc_key')
+                self.SPEECH_KEY = config.get('yc_key')
+                self.SPEECH_KEY_LOCATION = config.get('gc_key')
                 openai_key = config.get('openai_key', None)
                 self.speech_provider = config.get('speech_provider', 'google')
                 self.language = config.get('language', 'en-US')
@@ -219,6 +226,16 @@ class AssistantApp:
                                    height=self.config_window.winfo_screenheight())
         self.config_window.configure(bg=self.background_color)
 
+        color_config = {
+            'bg': self.background_color,
+            'fg': self.input_text_color,
+            'activebackground': self.input_text_color,
+            'activeforeground': self.background_color,
+            'highlightbackground': self.input_text_color,
+            'highlightcolor': self.input_text_color,
+            'highlightthickness': 0,
+        }
+
         # create label for OpenAI API key
         openai_label = tk.Label(self.config_window, text=I18N[self.language]['openai_api_key'],
                                 bg=self.background_color, fg=self.input_text_color)
@@ -234,64 +251,74 @@ class AssistantApp:
         yc_label.grid(row=1, column=0, sticky='w', padx=5, pady=5)
         # create entry for Yandex Cloud API key
         self.speech_key_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
-                                         textvariable=tk.StringVar(self.config_window, value=self.YC_KEY_SECRET))
+                                         textvariable=tk.StringVar(self.config_window, value=self.SPEECH_KEY))
         self.speech_key_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
+
+        # speech key location for google cloud
+        speech_key_location_label = tk.Label(self.config_window, text=I18N[self.language]['speech_key_location'],
+                                             bg=self.background_color, fg=self.input_text_color)
+        speech_key_location_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        self.speech_key_location_entry = tk.Entry(self.config_window, bg=self.background_color,
+                                                  fg=self.input_text_color,
+                                                  textvariable=tk.StringVar(
+                                                      self.config_window, value=self.SPEECH_KEY_LOCATION))
+        self.speech_key_location_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+        button_browse = tk.Button(self.config_window, text="Browse", command=self.open_file_dialog)
+        button_browse.config(**color_config)
+        button_browse.grid(row=2, column=3, sticky='w', padx=5, pady=5)
 
         # select yandex or google speech provider dropdown
         speech_provider_label = tk.Label(self.config_window, text=I18N[self.language]['speech_provider'],
                                          bg=self.background_color, fg=self.input_text_color)
-        speech_provider_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        speech_provider_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
         self.speech_provider_value = tk.StringVar(self.config_window, value=self.speech_provider)
         speech_provider_dropdown = tk.OptionMenu(self.config_window, self.speech_provider_value, 'google', 'yandex')
-        speech_provider_dropdown.config(bg=self.background_color, fg=self.input_text_color,
-                                        activebackground=self.background_color, activeforeground=self.input_text_color,
-                                        highlightbackground=self.background_color, highlightcolor=self.background_color,
-                                        highlightthickness=0)
-        speech_provider_dropdown.grid(row=2, column=1, sticky='w', padx=5, pady=5)
-
-        threshold_label = tk.Label(self.config_window, text=I18N[self.language]['threshold'],
-                                   bg=self.background_color, fg=self.input_text_color)
-        threshold_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
-
-        self.threshold_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
-                                        textvariable=tk.IntVar(self.config_window, value=self.threshold))
-        self.threshold_entry.grid(row=3, column=1, sticky='w', padx=5, pady=5)
+        speech_provider_dropdown.config(**color_config)
+        speech_provider_dropdown.grid(row=3, column=1, sticky='w', padx=5, pady=5)
 
         # select language from dropdown
         language_label = tk.Label(self.config_window, text=I18N[self.language]['language'],
                                   bg=self.background_color, fg=self.input_text_color)
         language_label.grid(row=4, column=0, sticky='w', padx=5, pady=5)
         language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value, "ru-RU", "en-US")
-        language_dropdown.config(bg=self.background_color, fg=self.input_text_color,
-                                 activebackground=self.background_color, activeforeground=self.input_text_color,
-                                 highlightbackground=self.background_color, highlightcolor=self.background_color,
-                                 highlightthickness=0)
+        language_dropdown.config(**color_config)
         language_dropdown.grid(row=4, column=1, sticky='w', padx=5, pady=5)
+
+        # micrphone sensitivity
+        threshold_label = tk.Label(self.config_window, text=I18N[self.language]['threshold'],
+                                   bg=self.background_color, fg=self.input_text_color)
+        threshold_label.grid(row=5, column=0, sticky='w', padx=5, pady=5)
+
+        self.threshold_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
+                                        textvariable=tk.IntVar(self.config_window, value=self.threshold))
+        self.threshold_entry.grid(row=5, column=1, sticky='w', padx=5, pady=5)
 
         # checkbox to hide buttons
         self.hide_buttons_var = tk.IntVar(self.config_window, value=self.hide_buttons)
         hide_buttons_checkbox = tk.Checkbutton(self.config_window, text=I18N[self.language]['hide_buttons'],
-                                               variable=self.hide_buttons_var,
-                                               # поменять цвет галочки
-                                               fg='white', bg=self.background_color,
-                                               activebackground=self.background_color,
-                                               selectcolor=self.background_color,
-                                               activeforeground='white', highlightcolor='white', bd=0)
-        hide_buttons_checkbox.grid(row=5, column=0, sticky='w', padx=5, pady=5)
+                                               variable=self.hide_buttons_var)
+        hide_buttons_checkbox.config(**color_config)
+        hide_buttons_checkbox.grid(row=6, column=0, sticky='w', padx=5, pady=5)
 
         # create button to save config
         save_button = tk.Button(self.config_window, text=I18N[self.language]['save'], command=self.save_config,
                                 bg='#b0bec5')
-        save_button.grid(row=6, column=0, sticky='w', padx=5, pady=5)
+        save_button.grid(row=7, column=0, sticky='w', padx=5, pady=5)
 
         # create button to cancel config
         cancel_button = tk.Button(self.config_window, text=I18N[self.language]['cancel'], command=self.cancel_config,
                                   bg='#b0bec5')
-        cancel_button.grid(row=6, column=1, sticky='w', padx=5, pady=5)
+        cancel_button.grid(row=7, column=1, sticky='w', padx=5, pady=5)
+
+    def open_file_dialog(self):
+        filename = filedialog.askopenfilename()
+        self.speech_key_location_entry.delete(0, tk.END)
+        self.speech_key_location_entry.insert(0, filename)
 
     def save_config(self):
         try:
-            self.YC_KEY_SECRET = self.speech_key_entry.get()
+            self.SPEECH_KEY = self.speech_key_entry.get()
+            self.SPEECH_KEY_LOCATION = self.speech_key_location_entry.get()
             openai.api_key = self.openai_entry.get()
             self.speech_provider = self.speech_provider_value.get()
             self.language = str(self.language_entry_value.get())
@@ -304,7 +331,8 @@ class AssistantApp:
 
             with open(os.getenv('APPDATA') + '\\deus\\config.json', 'w') as f:
                 json.dump({
-                    'yc_key': self.YC_KEY_SECRET,
+                    'yc_key': self.SPEECH_KEY,
+                    'gc_key': self.SPEECH_KEY_LOCATION,
                     'openai_key': openai.api_key,
                     'speech_provider': self.speech_provider,
                     'language': self.language,
@@ -329,14 +357,14 @@ class AssistantApp:
                 self.input_text.config(bg=self.background_second_color)
                 self.master.update()
 
-                sample_rate = 16000
+                sample_rate = self.recordingSampleRate
                 # Записываем аудио продолжительностью 3 секунды
                 audio_data = self.record_audio(seconds=30, sample_rate=sample_rate, threshold=self.threshold)
                 self.input_text.config(bg=self.background_color)
                 self.master.update()
 
                 if len(audio_data) > 0:
-                    text = self.speech.recognize(audio_data, sample_rate)
+                    text = self.speech.recognize(audio_data)
 
                     if len(text) > 0:
                         self.master.update()

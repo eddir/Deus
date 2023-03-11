@@ -1,9 +1,9 @@
+import os
 from abc import ABC, abstractmethod
 
 from speechkit import Session, SpeechSynthesis, ShortAudioRecognition
 from google.cloud import speech
-from google.cloud.speech import enums
-from google.cloud.speech import types
+from google.cloud import texttospeech as tts
 
 
 class SpeechKit(ABC):
@@ -11,11 +11,11 @@ class SpeechKit(ABC):
         self.language = language
 
     @staticmethod
-    def create(provider, api_key, language):
+    def create(provider, api_key, language, sample_rate):
         if provider == 'yandex':
-            return YandexSpeechKit(api_key, language)
+            return YandexSpeechKit(api_key, language, sample_rate)
         elif provider == 'google':
-            return GoogleSpeechAPI(api_key, language)
+            return GoogleSpeechAPI(api_key, language, sample_rate)
         else:
             raise ValueError(f'Unknown provider: {provider}')
 
@@ -36,17 +36,18 @@ class YandexSpeechKit(SpeechKit):
             'en-US': 'john',
         }[self.language]
 
-    def __init__(self, api_key, language):
+    def __init__(self, api_key, language, sample_rate):
         session = Session.from_api_key(api_key, x_client_request_id_header=True, x_data_logging_enabled=True)
         self.synthesizer = SpeechSynthesis(session)
         self.recognizer = ShortAudioRecognition(session)
+        self.sample_rate = sample_rate
         super().__init__(language)
 
-    def recognize(self, audio_bytes, sample_rate=48000):
+    def recognize(self, audio_bytes):
         return self.recognizer.recognize(
             audio_bytes,
             format='lpcm',
-            sampleRateHertz=sample_rate,
+            sampleRateHertz=self.sample_rate,
             lang=self.language
         ).strip()
 
@@ -62,22 +63,42 @@ class YandexSpeechKit(SpeechKit):
 
 class GoogleSpeechAPI(SpeechKit):
     # pycharm doesn't understand protobuf enums
-    def __init__(self, api_key, language):
+    def __init__(self, api_key_location, language, sample_rate):
+        # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "C:\\Users\\eddir\\google.json"
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = api_key_location
         self.recognizer = speech.SpeechClient()
-        self.config = types.RecognitionConfig(
-            encoding=enums.RecognitionConfig.AudioEncoding.OGG_OPUS,
-            language_code='en-US',
-            sample_rate_hertz=16000,
+        self.recognition_config = speech.RecognitionConfig(
+            # encoding=speech.RecognitionConfig.AudioEncoding.OGG_OPUS,
+            # sample_rate_hertz=sample_rate,
+            language_code=language,
             enable_word_time_offsets=True
         )
+        self.synthesize_config = tts.VoiceSelectionParams(
+            language_code=language, name=language + '-Wavenet-B'
+        )
+        self.sample_rate = sample_rate
         super().__init__(language)
 
     def synthesize(self, text):
-        pass
+        text_input = tts.SynthesisInput(text=text)
+        audio_config = tts.AudioConfig(
+            audio_encoding=tts.AudioEncoding.LINEAR16,
+            sample_rate_hertz=self.sample_rate
+        )
+
+        client = tts.TextToSpeechClient()
+        response = client.synthesize_speech(
+            input=text_input, voice=self.synthesize_config, audio_config=audio_config
+        )
+
+        return response.audio_content
 
     def recognize(self, audio_bytes):
-        result = self.recognizer(request={
-            "config": self.config,
-            "audio": speech.RecognitionAudio(content=audio_bytes)
-        })
-        print(result)
+        result = self.recognizer.recognize(
+            config=self.recognition_config,
+            audio=speech.RecognitionAudio(content=audio_bytes)
+        )
+        if len(result.results) > 0:
+            return result.results[0].alternatives[0].transcript
+        else:
+            return ''
