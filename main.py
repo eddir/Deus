@@ -46,8 +46,14 @@ I18N = {
     "en-US": {
         "title": "Deus",
         "config": "Config",
+        "key_explanation": "Depending on the provider, you may need an API key. \n"
+                           "For Yandex Speech API key can be obtained on the page \n"
+                           "https://developer.tech.yandex.ru/services/speechkit . \n\n"
+                           "For Google Speech API key can be obtained on the page \n"
+                           "https://console.cloud.google.com/apis/credentials . \n"
+                           "Specify one of the keys in the appropriate field. ",
         "openai_api_key": "OpenAI API Key",
-        "speech_api_key": "Speech API Key",
+        "speech_api_key": "Yandex Speech API Key",
         "speech_key_location": "Speech API Key Location (json file)",
         "speech_provider": "Speech provider",
         "threshold": "Microphone threshold",
@@ -66,9 +72,15 @@ I18N = {
     "ru-RU": {
         "title": "Деус",
         "config": "Настройки",
+        "key_explanation": "В зависимости от провайдера, вам может потребоваться API ключ. \n"
+                           "Для Yandex Speech API ключ можно получить на странице \n"
+                           "https://developer.tech.yandex.ru/services/speechkit . \n\n"
+                           "Для Google Speech API ключ можно получить на странице \n"
+                           "https://console.cloud.google.com/apis/credentials . \n"
+                           "Укажите один из ключей в нужном поле. ",
         "openai_api_key": "OpenAI API ключ",
         "speech_api_key": "Speech API ключ",
-        "speech_key_location": "Speech API ключ (json файл)",
+        "speech_key_location": "Google Speech API ключ (json файл)",
         "speech_provider": "Речевой провайдер",
         "threshold": "Чувствительность микрофона",
         "language": "Язык",
@@ -87,6 +99,13 @@ I18N = {
 
 
 class AssistantApp:
+
+    @property
+    def i18n(self):
+        if self.language in I18N:
+            return I18N[self.language]
+        else:
+            return I18N["en-US"]
 
     def __init__(self, master):
         try:
@@ -117,7 +136,7 @@ class AssistantApp:
             self.max_width = self.master.winfo_screenwidth()
 
             # master.minsize(400, 200)
-            master.title(I18N[self.language]["title"])
+            master.title(self.i18n["title"])
             master.maxsize(width=master.winfo_screenwidth(), height=master.winfo_screenheight())
             master.iconbitmap("logo.ico")
 
@@ -179,14 +198,14 @@ class AssistantApp:
             key = self.SPEECH_KEY if self.speech_provider == "yandex" else self.SPEECH_KEY_LOCATION
             self.speech = SpeechKit.create(self.speech_provider, key, self.language, self.recordingSampleRate)
         except Exception as e:
-            self.error(I18N[self.language]['speech_api_key_invalid'], str(e))
+            self.error(self.i18n['speech_api_key_invalid'], str(e))
             self.show_config_prompt()
         try:
             openai.api_key = openai_key
             # check if api key is valid
             openai.Engine.list()
         except Exception as e:
-            self.error(I18N[self.language]['openai_api_key_invalid'], str(e))
+            self.error(self.i18n['openai_api_key_invalid'], str(e))
             self.show_config_prompt()
 
     def fatal(self, title, message):
@@ -221,7 +240,7 @@ class AssistantApp:
     def show_config_prompt(self, event=None):
         # create new window
         self.config_window = tk.Toplevel(self.master)
-        self.config_window.title(I18N[self.language]['config'])
+        self.config_window.title(self.i18n['config'])
         self.config_window.maxsize(width=self.config_window.winfo_screenwidth(),
                                    height=self.config_window.winfo_screenheight())
         self.config_window.configure(bg=self.background_color)
@@ -237,7 +256,7 @@ class AssistantApp:
         }
 
         # create label for OpenAI API key
-        openai_label = tk.Label(self.config_window, text=I18N[self.language]['openai_api_key'],
+        openai_label = tk.Label(self.config_window, text=self.i18n['openai_api_key'],
                                 bg=self.background_color, fg=self.input_text_color)
         openai_label.grid(row=0, column=0, sticky='w', padx=5, pady=5)
         # create entry for OpenAI API key
@@ -245,70 +264,80 @@ class AssistantApp:
                                      textvariable=tk.StringVar(self.config_window, value=openai.api_key))
         self.openai_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
 
+        # explain how to get appropiate api keys
+        key_explanation = tk.Label(self.config_window, text=self.i18n['key_explanation'],
+                                   bg=self.background_color, fg=self.input_text_color, anchor='w', justify='left')
+        key_explanation.grid(row=1, column=0, sticky='w', padx=5, pady=5)
+
         # create label for Yandex Cloud API key
-        yc_label = tk.Label(self.config_window, text=I18N[self.language]['speech_api_key'],
+        yc_label = tk.Label(self.config_window, text=self.i18n['speech_api_key'],
                             bg=self.background_color, fg=self.input_text_color)
-        yc_label.grid(row=1, column=0, sticky='w', padx=5, pady=5)
+        yc_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
         # create entry for Yandex Cloud API key
         self.speech_key_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
                                          textvariable=tk.StringVar(self.config_window, value=self.SPEECH_KEY))
-        self.speech_key_entry.grid(row=1, column=1, sticky='w', padx=5, pady=5)
+        self.speech_key_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
 
         # speech key location for google cloud
-        speech_key_location_label = tk.Label(self.config_window, text=I18N[self.language]['speech_key_location'],
+        speech_key_location_label = tk.Label(self.config_window, text=self.i18n['speech_key_location'],
                                              bg=self.background_color, fg=self.input_text_color)
-        speech_key_location_label.grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        speech_key_location_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
         self.speech_key_location_entry = tk.Entry(self.config_window, bg=self.background_color,
                                                   fg=self.input_text_color,
                                                   textvariable=tk.StringVar(
                                                       self.config_window, value=self.SPEECH_KEY_LOCATION))
-        self.speech_key_location_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+        self.speech_key_location_entry.grid(row=3, column=1, sticky='w', padx=5, pady=5)
         button_browse = tk.Button(self.config_window, text="Browse", command=self.open_file_dialog)
         button_browse.config(**color_config)
-        button_browse.grid(row=2, column=3, sticky='w', padx=5, pady=5)
+        button_browse.grid(row=3, column=3, sticky='w', padx=5, pady=5)
 
         # select yandex or google speech provider dropdown
-        speech_provider_label = tk.Label(self.config_window, text=I18N[self.language]['speech_provider'],
+        speech_provider_label = tk.Label(self.config_window, text=self.i18n['speech_provider'],
                                          bg=self.background_color, fg=self.input_text_color)
-        speech_provider_label.grid(row=3, column=0, sticky='w', padx=5, pady=5)
+        speech_provider_label.grid(row=4, column=0, sticky='w', padx=5, pady=5)
         self.speech_provider_value = tk.StringVar(self.config_window, value=self.speech_provider)
         speech_provider_dropdown = tk.OptionMenu(self.config_window, self.speech_provider_value, 'google', 'yandex')
         speech_provider_dropdown.config(**color_config)
-        speech_provider_dropdown.grid(row=3, column=1, sticky='w', padx=5, pady=5)
+        speech_provider_dropdown.grid(row=4, column=1, sticky='w', padx=5, pady=5)
 
         # select language from dropdown
-        language_label = tk.Label(self.config_window, text=I18N[self.language]['language'],
+        language_label = tk.Label(self.config_window, text=self.i18n['language'],
                                   bg=self.background_color, fg=self.input_text_color)
-        language_label.grid(row=4, column=0, sticky='w', padx=5, pady=5)
-        language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value, "ru-RU", "en-US")
+        language_label.grid(row=5, column=0, sticky='w', padx=5, pady=5)
+        language_dropdown = tk.OptionMenu(self.config_window, self.language_entry_value,
+                                          'ar-SA', 'bg-BG', 'ca-ES', 'cs-CZ', 'da-DK', 'de-DE', 'el-GR', 'en-US',
+                                          'es-ES', 'fa-IR', 'fi-FI', 'fr-FR', 'he-IL', 'hi-IN', 'hr-HR', 'hu-HU',
+                                          'id-ID', 'it-IT', 'ja-JP', 'ko-KR', 'lt-LT', 'lv-LV', 'ms-MY', 'nb-NO',
+                                          'nl-NL', 'pl-PL', 'pt-BR', 'ro-RO', 'ru-RU', 'sk-SK', 'sl-SI', 'sv-SE',
+                                          'th-TH', 'tr-TR', 'uk-UA', 'vi-VN', 'zh-CN')
         language_dropdown.config(**color_config)
-        language_dropdown.grid(row=4, column=1, sticky='w', padx=5, pady=5)
+        language_dropdown.grid(row=5, column=1, sticky='w', padx=5, pady=5)
 
         # micrphone sensitivity
-        threshold_label = tk.Label(self.config_window, text=I18N[self.language]['threshold'],
+        threshold_label = tk.Label(self.config_window, text=self.i18n['threshold'],
                                    bg=self.background_color, fg=self.input_text_color)
-        threshold_label.grid(row=5, column=0, sticky='w', padx=5, pady=5)
+        threshold_label.grid(row=6, column=0, sticky='w', padx=5, pady=5)
 
         self.threshold_entry = tk.Entry(self.config_window, bg=self.background_color, fg=self.input_text_color,
                                         textvariable=tk.IntVar(self.config_window, value=self.threshold))
-        self.threshold_entry.grid(row=5, column=1, sticky='w', padx=5, pady=5)
+        self.threshold_entry.grid(row=6, column=1, sticky='w', padx=5, pady=5)
 
         # checkbox to hide buttons
         self.hide_buttons_var = tk.IntVar(self.config_window, value=self.hide_buttons)
-        hide_buttons_checkbox = tk.Checkbutton(self.config_window, text=I18N[self.language]['hide_buttons'],
+        hide_buttons_checkbox = tk.Checkbutton(self.config_window, text=self.i18n['hide_buttons'],
                                                variable=self.hide_buttons_var)
         hide_buttons_checkbox.config(**color_config)
-        hide_buttons_checkbox.grid(row=6, column=0, sticky='w', padx=5, pady=5)
+        hide_buttons_checkbox.grid(row=7, column=0, sticky='w', padx=5, pady=5)
 
         # create button to save config
-        save_button = tk.Button(self.config_window, text=I18N[self.language]['save'], command=self.save_config,
+        save_button = tk.Button(self.config_window, text=self.i18n['save'], command=self.save_config,
                                 bg='#b0bec5')
-        save_button.grid(row=7, column=0, sticky='w', padx=5, pady=5)
+        save_button.grid(row=8, column=0, sticky='w', padx=5, pady=5)
 
         # create button to cancel config
-        cancel_button = tk.Button(self.config_window, text=I18N[self.language]['cancel'], command=self.cancel_config,
+        cancel_button = tk.Button(self.config_window, text=self.i18n['cancel'], command=self.cancel_config,
                                   bg='#b0bec5')
-        cancel_button.grid(row=7, column=1, sticky='w', padx=5, pady=5)
+        cancel_button.grid(row=8, column=1, sticky='w', padx=5, pady=5)
 
     def open_file_dialog(self):
         filename = filedialog.askopenfilename()
@@ -381,7 +410,7 @@ class AssistantApp:
                         continue
                 return
             except RateLimitError:
-                messagebox.showerror("Error", I18N[self.language]['rate_limit_error'])
+                messagebox.showerror("Error", self.i18n['rate_limit_error'])
                 return
             except Exception as e:
                 self.fatal("Error", "%s - %s" % (type(e).__name__, e))
@@ -434,10 +463,10 @@ class AssistantApp:
         text = ""
         for message in self.conversation:
             if message["role"] == "user":
-                text += "%s: %s \n" % (I18N[self.language]['you'], message["content"])
+                text += "%s: %s \n" % (self.i18n['you'], message["content"])
 
             if message["role"] == "assistant":
-                text += "%s: %s \n" % (I18N[self.language]['deus'], message["content"])
+                text += "%s: %s \n" % (self.i18n['deus'], message["content"])
 
         self.input_text.delete(1.0, tk.END)
         self.input_text.insert(tk.END, text)
