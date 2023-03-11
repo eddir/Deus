@@ -8,7 +8,7 @@ import traceback
 
 from openai.error import RateLimitError
 
-from speech import YandexSpeechKit, SpeechKit
+from speech import SpeechKit
 
 for _name in ('stdin', 'stdout', 'stderr'):
     if getattr(sys, _name) is None:

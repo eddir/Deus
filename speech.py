@@ -78,6 +78,6 @@ class GoogleSpeechAPI(SpeechKit):
     def recognize(self, audio_bytes):
         result = self.recognizer(request={
             "config": self.config,
-            "audio": speech.RecognitionAudio(content=content)
+            "audio": speech.RecognitionAudio(content=audio_bytes)
         })
         print(result)
