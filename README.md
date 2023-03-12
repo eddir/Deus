@@ -1,8 +1,64 @@
 <p align="center">
 <img src="https://raw.githubusercontent.com/eddir/Deus/readme/.github/readme/deus.png" loading="eager"  alt="The Deus logo"/>
 <br>
-<b>Deus assistant from the lovely Israel TV series <a href="https://en.wikipedia.org/wiki/Deus_(TV_series)">Deus</a></b>
+<b>Deus assistant from the lovely Israel TV series <a href="https://en.wikipedia.org/wiki/Deus_(TV_series)">דאוס</a></b>
 </p>
+
+[English version below](#english)
+
+# דאוס
+
+בשנת 2008 הייתה משדרת בערוץ הילדים סדרת מדע בדיונית מפורסמת בשם "דאוס". הוא מספרת על הבניית המוח המלאכותי. ועכשיו, 15 שנים מאוחר יותר, אנו חיים את האירועים הללו כבר בחיים האמיתיים. אנו יכולים להרגיש כמו גיבורי הסדרה ההיא. החלטתי להפוך את החלום למציאות. חלומות מתגשמים, ידידי.
+## תיאור
+
+דאוס היא עוזרת דיגיטלית שנועדה לבצע מגוון משימות. העוזרת היא יישום חלונות המשתמש בזיהוי ובהקרנת דיבור כדי לתקשר עם המשתמש. המראה של העוזרת דומה למראה של העוזרת האנושית העין-בעין מסדרת הטלוויזיה. העוזרת היא מבוססת על המודל ChatGPT, שהוא מודל GPT-2 שהוכשר על ידי צוות OpenAI על סט נתונים גדול של שיחות. העוזרת יכולה לענות על שאלות, לבצע משימות ואפילו לספר סיפורים באמצעות הקרנת דיבור. לנוחיותך, העוזרת יכולה להשתמש בשירותי Google Cloud Text-to-Speech API או Yandex SpeechKit API כדי להקרין ולזהות דיבור. ייתכן שתצטרך גם לספק מפתחות API שלך עצמך כדי שהעוזרת תעבוד כראוי:
+
+* [Google Cloud Text-to-Speech API](https://cloud.google.com/text-to-speech) או [Yandex SpeechKit API](https://cloud.yandex.com/services/speechkit)
+* [OpenAI API](https://platform.openai.com/) למודל ChatGPT
+
+כל שירות יש לו מודל תמחור שלו. אנא קרא את התיעוד של כל שירות כדי ללמוד עוד על התמחור. עבור משתמשים חדשים הם מציעים תקופת ניסיון חינם עם מספר מוגבל של בקשות.
+
+## דרישות
+
+* Windows 8 או גרסה מאוחרת יותר (נבדק על Windows 11 64-bit)
+* חיבור אינטרנט יציב
+* מיקרופון
+* דפסים או אוזניות
+
+## התקנה
+
+השג את הגרסה האחרונה מ[קישור ההורדה](https://github.com/eddir/Deus/releases/download/0.2.0/Deus.exe) והריץ אותה.
+
+בפעם הראשונה, העוזר יבקש ממך לספק את מפתחות האפי שלך. אתה יכול למצוא את המפתחות
+[קונסולת ענן גוגל](https://console.cloud.google.com/) (קובץ ג ' סון) או 
+[יאנדקס ענן קונסולת](https://console.cloud.yandex.com/) (תלוי בשירות שתבחר). 
+אתה יכול גם למצוא את מפתח הצ ' אט-פי-איי ב [לוח המחוונים של אופנאי] (https://platform.openai.com/).
+
+אתה יכול לבחור את השירות שאתה רוצה להשתמש בו לסינתזת דיבור והכרה ושפה. אם הסתבכת בזיהוי דיבור, תוכל לנסות להפחית את הרגישות של מנוע זיהוי הדיבור על ידי שינוי ערך סף המיקרופון. ככל שהערך נמוך יותר, כך מנוע זיהוי הדיבור יהיה רגיש יותר.
+
+אם אתה מכיר את שורת הפקודה ומעדיף ליצור הפעלה עצמאית בעצמך, תוכל להשתמש בפקודה הבאה:
+
+```bash
+pyinstaller --noconfirm --onefile --windowed --icon "./logo.ico" --name "Deus" --collect-all "transformers" --collect-all "tqdm" --collect-all "regex" --collect-all "requests" --collect-all "packaging" --collect-all "filelock" --collect-all "numpy" --collect-all "tokenizers" --collect-all "google-cloud-core" --add-data "./deus.gif;." --add-data "./logo.ico;."  "./main.py"
+```
+
+ההפעלה תיווצר בתיקייה `dist`.
+
+## שימוש
+
+לחץ על מקש הרווח כדי להתחיל את העוזר. הוא יקשיב לקול שלך וינסה להבין מה שאמרת.
+אם העוזר הבין אותך, הוא ינסה לענות על השאלה שלך.
+
+אם ברצונך לאפס את השיחה, לחץ על מקש ה-`r`. אם ברצונך לפתוח את ההגדרות, לחץ על מקש ה-`c`.
+לעזרה, לחץ על מקש ה-`h` או לחץ עם העכבר הימני על חלון העוזר.
+
+באפשרותך להחליף את מראה העוזר על ידי לחיצה על מקש ה-`s`.
+
+## רישיון
+
+MIT License
+
+# English
 
 ## Disclaimer
 
@@ -55,7 +111,7 @@ with speech recognition, you can try to decrease the sensitivity of the speech r
 If you familiar with the command line and prefer to create a standalone executable yourself, you can use the following 
 command:
 
-```
+```bash
 pyinstaller --noconfirm --onefile --windowed --icon "./logo.ico" --name "Deus" --collect-all "transformers" --collect-all "tqdm" --collect-all "regex" --collect-all "requests" --collect-all "packaging" --collect-all "filelock" --collect-all "numpy" --collect-all "tokenizers" --collect-all "google-cloud-core" --add-data "./deus.gif;." --add-data "./logo.ico;."  "./main.py"
 ```
 
