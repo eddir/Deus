@@ -530,6 +530,9 @@ class AssistantApp:
         self.input_text.config(font=("Helvetica", self.font_size))
 
     def chat_gpt(self):
+        if self.i18n['easter_egg_question'] in self.conversation[-1]['content']:
+            return self.i18n['easter_egg_answer']
+
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=self.conversation,

@@ -22,6 +22,8 @@ I18N = {
         "threshold_invalid": "Threshold is invalid. Please check it and try again.",
         "you": "You",
         "deus": "Deus",
+        "easter_egg_question": "What do you like to eat",
+        "easter_egg_answer": "It doesn't matter. The main thing is that there are a lot of ketchup"
     },
     "ru-RU": {
         "title": "Деус",
@@ -46,6 +48,8 @@ I18N = {
         "threshold_invalid": "Порог неверный. Пожалуйста, проверьте его и попробуйте снова.",
         "you": "Вы",
         "deus": "Деус",
+        "easter_egg_question": "Что ты любишь есть",
+        "easter_egg_answer": "Не важно. Главное, чтобы было много кетчупа"
     },
     "he-IL": {
         "title": "דאוס",
@@ -70,5 +74,7 @@ I18N = {
         "threshold_invalid": "הסף לא תקין. אנא בדוק אותו ונסה שוב.",
         "you": "אתה",
         "deus": "דאוס",
-    },
+        "easter_egg_question": "מה אתה אוהב לאכול",
+        "easter_egg_answer": "לא מעניין. העיקר שׁיהיה אם הרבה קטשופ"
+    }
 }
