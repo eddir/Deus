@@ -22,7 +22,7 @@ I18N = {
         "threshold_invalid": "Threshold is invalid. Please check it and try again.",
         "you": "You",
         "deus": "Deus",
-        "easter_egg_question": "What do you like to eat",
+        "easter_egg_question": "what do you like to eat",
         "easter_egg_answer": "It doesn't matter. The main thing is that there are a lot of ketchup",
         "welcome": "Hello. My name is Deus. I am a virtual assistant. I was created by Doctor Gold, Proffessor Werner, "
                    "Yoav Heisner and other scientists. I can help you with many things. I can answer your questions,"
@@ -53,7 +53,7 @@ I18N = {
         "threshold_invalid": "Порог неверный. Пожалуйста, проверьте его и попробуйте снова.",
         "you": "Вы",
         "deus": "Деус",
-        "easter_egg_question": "Что ты любишь есть",
+        "easter_egg_question": "что ты любишь есть",
         "easter_egg_answer": "Не важно. Главное, чтобы было много кетчупа",
         "welcome": "Привет. Меня зовут Деус. Я виртуальный ассистент. Я был создан Доктором Голдом, Профессором "
                    "Вернером, Йоавом Хейснером и другими учеными. Я могу помочь вам с многими вещами. Я могу отвечать "
