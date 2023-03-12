@@ -45,6 +45,7 @@ tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 I18N = {
     "en-US": {
         "title": "Deus",
+        "recording": "Recording...",
         "config": "Config",
         "key_explanation": "Depending on the provider, you may need an API key. \n"
                            "For Yandex Speech API key can be obtained on the page \n"
@@ -71,6 +72,7 @@ I18N = {
     },
     "ru-RU": {
         "title": "Деус",
+        "recording": "Запись...",
         "config": "Настройки",
         "key_explanation": "В зависимости от провайдера, вам может потребоваться API ключ. \n"
                            "Для Yandex Speech API ключ можно получить на странице \n"
@@ -384,11 +386,13 @@ class AssistantApp:
         while True:
             try:
                 self.input_text.config(bg=self.background_second_color)
+                self.master.title(self.i18n['title'] + ' - ' + self.i18n['recording'])
                 self.master.update()
 
                 sample_rate = self.recordingSampleRate
                 # Записываем аудио продолжительностью 3 секунды
                 audio_data = self.record_audio(seconds=30, sample_rate=sample_rate, threshold=self.threshold)
+                self.master.title(self.i18n['title'])
                 self.input_text.config(bg=self.background_color)
                 self.master.update()
 
