@@ -1,9 +1,9 @@
 # Deus
-
+<p align="center">
 <img src="https://raw.githubusercontent.com/eddir/Deus/readme/.github/readme/deus.png" loading="eager"  alt="The Deus logo"/>
 <br>
 <b>Deus assistant from the lovely Israel TV series <a href="https://en.wikipedia.org/wiki/Deus_(TV_series)">Deus</a></b>
-
+</p>
 ## Disclaimer
 
 _This project is not affiliated with the creator of the TV series, the actors, the production company, or any other 
