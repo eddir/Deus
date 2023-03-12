@@ -6,14 +6,17 @@ import sys
 import threading
 import traceback
 
-from openai.error import RateLimitError
+# fix https://github.com/protocolbuffers/protobuf/issues/3002
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
-from speech import SpeechKit
-
+# fix no console on windows mode
 for _name in ('stdin', 'stdout', 'stderr'):
     if getattr(sys, _name) is None:
         setattr(sys, _name, open(os.devnull, 'r' if _name == 'stdin' else 'w'))
 
+from speech import SpeechKit
+
+from openai.error import RateLimitError
 import tkinter as tk
 import io
 import wave
@@ -47,12 +50,9 @@ I18N = {
         "title": "Deus",
         "recording": "Recording...",
         "config": "Config",
-        "key_explanation": "Depending on the provider, you may need an API key. \n"
-                           "For Yandex Speech API key can be obtained on the page \n"
-                           "https://developer.tech.yandex.ru/services/speechkit . \n\n"
-                           "For Google Speech API key can be obtained on the page \n"
-                           "https://console.cloud.google.com/apis/credentials . \n"
-                           "Specify one of the keys in the appropriate field. ",
+        "key_explanation": "Specify one of the keys in the appropriate field. \n"
+                           "If you use Yandex Speech API, then enter the string key \n"
+                           "If you use Google Speech API, then select the path to the json file with the key \n",
         "openai_api_key": "OpenAI API Key",
         "speech_api_key": "Yandex Speech API Key",
         "speech_key_location": "Speech API Key Location (json file)",
@@ -74,12 +74,9 @@ I18N = {
         "title": "Деус",
         "recording": "Запись...",
         "config": "Настройки",
-        "key_explanation": "В зависимости от провайдера, вам может потребоваться API ключ. \n"
-                           "Для Yandex Speech API ключ можно получить на странице \n"
-                           "https://developer.tech.yandex.ru/services/speechkit . \n\n"
-                           "Для Google Speech API ключ можно получить на странице \n"
-                           "https://console.cloud.google.com/apis/credentials . \n"
-                           "Укажите один из ключей в нужном поле. ",
+        "key_explanation": "Укажите один из ключей в нужном поле. \n"
+                           "Если вы используете Yandex Speech API, то впишите строковый ключ \n"
+                           "Если вы используете Google Speech API, то выберите путь к json файлу с ключом \n",
         "openai_api_key": "OpenAI API ключ",
         "speech_api_key": "Speech API ключ",
         "speech_key_location": "Google Speech API ключ (json файл)",
