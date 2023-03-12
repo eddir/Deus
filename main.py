@@ -14,6 +14,7 @@ for _name in ('stdin', 'stdout', 'stderr'):
     if getattr(sys, _name) is None:
         setattr(sys, _name, open(os.devnull, 'r' if _name == 'stdin' else 'w'))
 
+from lang import I18N
 from speech import SpeechKit
 
 from openai.error import RateLimitError
@@ -38,63 +39,12 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 try:
-    # noinspection PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences,PyProtectedMember
     os.chdir(sys._MEIPASS)
 except AttributeError:
     pass
 
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-
-I18N = {
-    "en-US": {
-        "title": "Deus",
-        "recording": "Recording...",
-        "config": "Config",
-        "key_explanation": "Specify one of the keys in the appropriate field. \n"
-                           "If you use Yandex Speech API, then enter the string key \n"
-                           "If you use Google Speech API, then select the path to the json file with the key \n",
-        "openai_api_key": "OpenAI API Key",
-        "speech_api_key": "Yandex Speech API Key",
-        "speech_key_location": "Speech API Key Location (json file)",
-        "speech_provider": "Speech provider",
-        "threshold": "Microphone threshold",
-        "language": "Language",
-        "hide_buttons": "Hide buttons",
-        "save": "Save",
-        "cancel": "Cancel",
-        "error": "Error",
-        "openai_overload": "Currently OpenAI API is overloaded. Please try again later.",
-        "openai_api_key_invalid": "OpenAI API Key is invalid. Please check it and try again.",
-        "speech_api_key_invalid": "Speech API Key is invalid. Please check it and try again.",
-        "threshold_invalid": "Threshold is invalid. Please check it and try again.",
-        "you": "You",
-        "deus": "Deus",
-    },
-    "ru-RU": {
-        "title": "Деус",
-        "recording": "Запись...",
-        "config": "Настройки",
-        "key_explanation": "Укажите один из ключей в нужном поле. \n"
-                           "Если вы используете Yandex Speech API, то впишите строковый ключ \n"
-                           "Если вы используете Google Speech API, то выберите путь к json файлу с ключом \n",
-        "openai_api_key": "OpenAI API ключ",
-        "speech_api_key": "Speech API ключ",
-        "speech_key_location": "Google Speech API ключ (json файл)",
-        "speech_provider": "Речевой провайдер",
-        "threshold": "Чувствительность микрофона",
-        "language": "Язык",
-        "hide_buttons": "Скрыть кнопки",
-        "save": "Сохранить",
-        "cancel": "Отмена",
-        "error": "Ошибка",
-        "openai_overload": "Сейчас OpenAI API перегружен. Пожалуйста, попробуйте позже.",
-        "openai_api_key_invalid": "OpenAI API Key неверный. Пожалуйста, проверьте его и попробуйте снова.",
-        "speech_api_key_invalid": "Speech API Key неверный. Пожалуйста, проверьте его и попробуйте снова.",
-        "threshold_invalid": "Порог неверный. Пожалуйста, проверьте его и попробуйте снова.",
-        "you": "Вы",
-        "deus": "Деус",
-    }
-}
 
 
 class AssistantApp:
