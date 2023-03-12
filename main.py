@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Eduard Rostkov <ea@rostkov.me>
+# This script is licensed under the MIT License
+# https://opensource.org/licenses/MIT
+
 import audioop
 import json
 import logging
@@ -58,6 +62,7 @@ class AssistantApp:
 
     def __init__(self, master):
         try:
+            self.first_run = False
             self.SPEECH_KEY = str("")
             self.SPEECH_KEY_LOCATION = str("")
             self.openai_entry = None
@@ -146,6 +151,9 @@ class AssistantApp:
         try:
             key = self.SPEECH_KEY if self.speech_provider == "yandex" else self.SPEECH_KEY_LOCATION
             self.speech = SpeechKit.create(self.speech_provider, key, self.language, self.recordingSampleRate)
+            if self.first_run:
+                self.first_run = False
+                self.play_audio(self.speech.synthesize(self.i18n['welcome']))
         except Exception as e:
             self.error(self.i18n['speech_api_key_invalid'], str(e))
             self.show_config_prompt()
@@ -304,6 +312,7 @@ class AssistantApp:
 
             if not os.path.exists(os.getenv('APPDATA') + '\\deus'):
                 os.makedirs(os.getenv('APPDATA') + '\\deus')
+                self.first_run = True
 
             self.SPEECH_KEY_LOCATION = self.speech_key_location_entry.get()
             if self.SPEECH_KEY_LOCATION:

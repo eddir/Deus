@@ -1,3 +1,7 @@
+# Copyright (c) 2023 Eduard Rostkov <ea@rostkov.me>
+# This script is licensed under the MIT License
+# https://opensource.org/licenses/MIT
+
 import os
 from abc import ABC, abstractmethod
 

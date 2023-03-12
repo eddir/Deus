@@ -23,7 +23,12 @@ I18N = {
         "you": "You",
         "deus": "Deus",
         "easter_egg_question": "What do you like to eat",
-        "easter_egg_answer": "It doesn't matter. The main thing is that there are a lot of ketchup"
+        "easter_egg_answer": "It doesn't matter. The main thing is that there are a lot of ketchup",
+        "welcome": "Hello. My name is Deus. I am a virtual assistant. I was created by Doctor Gold, Proffessor Werner, "
+                   "Yoav Heisner and other scientists. I can help you with many things. I can answer your questions,"
+                   " help you with your homework, tell you a joke, and even play a game with you. Try to ask me "
+                   "something. I will try to answer you. If you want to change my settings, press the button 'c'. "
+                   "For help, press the right mouse button."
     },
     "ru-RU": {
         "title": "Деус",
@@ -49,7 +54,12 @@ I18N = {
         "you": "Вы",
         "deus": "Деус",
         "easter_egg_question": "Что ты любишь есть",
-        "easter_egg_answer": "Не важно. Главное, чтобы было много кетчупа"
+        "easter_egg_answer": "Не важно. Главное, чтобы было много кетчупа",
+        "welcome": "Привет. Меня зовут Деус. Я виртуальный ассистент. Я был создан Доктором Голдом, Профессором "
+                   "Вернером, Йоавом Хейснером и другими учеными. Я могу помочь вам с многими вещами. Я могу отвечать "
+                   "на ваши вопросы, помогать вам с домашним заданием, рассказывать анекдоты, а даже играть с вами в "
+                   "игры. Попробуйте спросить меня что-нибудь. Я постараюсь ответить вам. Если вы хотите изменить мои "
+                   "настройки, нажмите кнопку 'c'. Для помощи нажмите правую кнопку мыши."
     },
     "he-IL": {
         "title": "דאוס",
@@ -75,6 +85,10 @@ I18N = {
         "you": "אתה",
         "deus": "דאוס",
         "easter_egg_question": "מה אתה אוהב לאכול",
-        "easter_egg_answer": "לא מעניין. העיקר שׁיהיה אם הרבה קטשופ"
+        "easter_egg_answer": "לא מעניין. העיקר שׁיהיה אם הרבה קטשופ",
+        "welcome": "שלום. זה דאוס. אני סייבר אסיסטנט. נוצרתי על ידי דוקטור גולד, פרופסור ורנר, יואב הייסנר ומדענים "
+                   "אחרים. אני יכול לעזור לך במגוון דברים. אני יכול לענות על שאלות שלך, לעזור לך עם הצעדים הבאים, "
+                   "לספר לך חקיקות ואפילו לשחק איתך במשחקים. נסה לשאול אותי משהו. אני אנסה לענות לך. אם אתה רוצה "
+                   "לשנות את ההגדרות שלי, לחץ על הכפתור 'c'. לעזרה, לחץ על כפתור העכבר הימני."
     }
 }
