@@ -349,16 +349,25 @@ class AssistantApp:
     def save_config(self):
         try:
             self.SPEECH_KEY = self.speech_key_entry.get()
-            self.SPEECH_KEY_LOCATION = self.speech_key_location_entry.get()
             openai.api_key = self.openai_entry.get()
             self.speech_provider = self.speech_provider_value.get()
             self.language = str(self.language_entry_value.get())
             self.threshold = int(self.threshold_entry.get())
             self.hide_buttons = bool(self.hide_buttons_var.get())
-            self.config_window.destroy()
 
             if not os.path.exists(os.getenv('APPDATA') + '\\deus'):
                 os.makedirs(os.getenv('APPDATA') + '\\deus')
+
+            self.SPEECH_KEY_LOCATION = self.speech_key_location_entry.get()
+            if self.SPEECH_KEY_LOCATION:
+                # copy speech key to appdata
+                with open(self.SPEECH_KEY_LOCATION, 'r') as f:
+                    key_data = f.read()
+
+                self.SPEECH_KEY_LOCATION = os.getenv('APPDATA') + '\\deus\\google.json'
+
+                with open(self.SPEECH_KEY_LOCATION, 'w') as f:
+                    f.write(key_data)
 
             with open(os.getenv('APPDATA') + '\\deus\\config.json', 'w') as f:
                 json.dump({
@@ -371,6 +380,7 @@ class AssistantApp:
                     'hide_buttons': self.hide_buttons
                 }, f)
 
+            self.config_window.destroy()
             self.auth(openai.api_key)
         except Exception as e:
             self.fatal("Couldn't save config", str(e))
