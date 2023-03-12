@@ -27,7 +27,7 @@
 
 ## התקנה
 
-השג את הגרסה האחרונה מ[קישור ההורדה](https://github.com/eddir/Deus/releases/download/0.2.0/Deus.exe) והריץ אותה.
+השג את הגרסה האחרונה מ[קישור ההורדה](https://github.com/eddir/Deus/releases/download/0.2.1/Deus.exe) והריץ אותה.
 
 בפעם הראשונה, העוזר יבקש ממך לספק את מפתחות האפי שלך. אתה יכול למצוא את המפתחות
 [קונסולת ענן גוגל](https://console.cloud.google.com/) (קובץ ג ' סון) או 
@@ -96,7 +96,7 @@ For new users they offer a free trial period with a limited number of requests.
 
 ## Installation
 
-Retrieve the latest release from the [download link](https://github.com/eddir/Deus/releases/download/0.2.0/Deus.exe) 
+Retrieve the latest release from the [download link](https://github.com/eddir/Deus/releases/download/0.2.1/Deus.exe) 
 and run it. You may want to add the executable to your desktop for easier access.
 
 For the first time, the assistant will ask you to provide your API keys. You can find the API keys in the
