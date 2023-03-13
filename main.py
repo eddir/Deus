@@ -492,6 +492,7 @@ class AssistantApp:
             frames_per_buffer=chunk_size
         )
         frames = []
+        timeout = 5
         try:
             recording_state = 0
             for _ in range(1, int(sample_rate / chunk_size * seconds)):
@@ -511,7 +512,7 @@ class AssistantApp:
                 if recording_state > 0:
                     if rms <= threshold:
                         recording_state += 1
-                        if recording_state > 3:
+                        if recording_state > timeout:
                             break
                     else:
                         recording_state = 1
