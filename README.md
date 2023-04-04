@@ -11,7 +11,7 @@
 בשנת 2008 הייתה משדרת בערוץ הילדים סדרת מדע בדיונית מפורסמת בשם "דאוס". הוא מספרת על הבניית המוח המלאכותי. ועכשיו, 15 שנים מאוחר יותר, אנו חיים את האירועים הללו כבר בחיים האמיתיים. אנו יכולים להרגיש כמו גיבורי הסדרה ההיא. החלטתי להפוך את החלום למציאות. חלומות מתגשמים, ידידי.
 ## תיאור
 
-דאוס היא עוזרת דיגיטלית שנועדה לבצע מגוון משימות. העוזרת היא יישום חלונות המשתמש בזיהוי ובהקרנת דיבור כדי לתקשר עם המשתמש. המראה של העוזרת דומה למראה של העוזרת האנושית העין-בעין מסדרת הטלוויזיה. העוזרת היא מבוססת על המודל ChatGPT, שהוא מודל GPT-2 שהוכשר על ידי צוות OpenAI על סט נתונים גדול של שיחות. העוזרת יכולה לענות על שאלות, לבצע משימות ואפילו לספר סיפורים באמצעות הקרנת דיבור. לנוחיותך, העוזרת יכולה להשתמש בשירותי Google Cloud Text-to-Speech API או Yandex SpeechKit API כדי להקרין ולזהות דיבור. ייתכן שתצטרך גם לספק מפתחות API שלך עצמך כדי שהעוזרת תעבוד כראוי:
+דאוס היא עוזרת דיגיטלית שנועדה לבצע מגוון משימות. העוזרת היא יישום חלונות המשתמש בזיהוי ובהקרנת דיבור כדי לתקשר עם המשתמש. המראה של העוזרת דומה למראה של העוזרת האנושית העין-בעין מסדרת הטלוויזיה. העוזרת היא מבוססת על המודל ChatGPT, שהוא מודל GPT-3.5 שהוכשר על ידי צוות OpenAI על סט נתונים גדול של שיחות. העוזרת יכולה לענות על שאלות, לבצע משימות ואפילו לספר סיפורים באמצעות הקרנת דיבור. לנוחיותך, העוזרת יכולה להשתמש בשירותי Google Cloud Text-to-Speech API או Yandex SpeechKit API כדי להקרין ולזהות דיבור. ייתכן שתצטרך גם לספק מפתחות API שלך עצמך כדי שהעוזרת תעבוד כראוי:
 
 * [Google Cloud Text-to-Speech API](https://cloud.google.com/text-to-speech) או [Yandex SpeechKit API](https://cloud.yandex.com/services/speechkit)
 * [OpenAI API](https://platform.openai.com/) למודל ChatGPT
@@ -76,7 +76,7 @@ otherwise, arising from, out of or in connection with the software or the use or
 Deus is a Python-based assistant that can be used to perform various tasks. It is a window-based application that
 uses speech recognition and speech synthesis to communicate with the user. The appearance of the assistant resembles
 the appearance of the original human-eye assistant from the TV series. The assistant is based on the ChatGPT
-model, which is a GPT-2 model that was trained by the OpenAI team on a huge dataset of conversations. The assistant
+model, which is a GPT-3.5 model that was trained by the OpenAI team on a huge dataset of conversations. The assistant
 is able to answer questions, perform tasks, and even tell jokes using speech synthesis. For your convenience, the
 assistant can use the Google Cloud Text-to-Speech API or the Yandex SpeechKit API to synthesize and recognize speech.
 You may also need to provide your own API keys for the assistant to work properly: 
